@@ -1,0 +1,16 @@
+{
+   "name": "initframework/initframework",
+   "type": "initframework",
+   "description": "A minimalistic web framework for php developers.",
+   "keywords": ["init","initframework","web framework","php"],
+   "homepage": "http://initframework.com",
+   "license": "MIT",
+   "authors": [
+      {
+         "name": "Ebuka Odini",
+         "email": "ebukaodini@gmail.com",
+         "homepage": "http://github.com/Ebuka18",
+         "role": "Developer"
+      }
+   ]
+}
