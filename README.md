@@ -1,2 +1,2 @@
 # initframework
-A minimalistic web framework for php developers.
+👌🏽 A simple web framework for php developers.

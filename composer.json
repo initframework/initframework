@@ -1,25 +1,25 @@
 {
-    "name": "initframework/initframework",
-    "description": "A minimalistic web framework for php developers.",
-    "keywords": ["minimalistic","initframework","web framework","php"],
-    "homepage": "http://initframework.com",
-    "type": "library",
-    "require": {
-        "php": "^7.3"
-    },
+    "name": "ebukaodini/initframework",
+    "description": "👌🏽 A simple web framework for php developer.",
+    "keywords": ["simple","web framework","php"],
+    "homepage": "http://github.com/ebukaodini/initframework",
+    "version": "1.0.0",
     "license": "MIT",
+    "type": "library",
     "authors": [
         {
             "name": "Ebuka Odini",
-            "email": "ebukaodini@gmail.com",
-            "homepage": "http://github.com/Ebuka18",
-            "role": "Developer"
+            "email": "ebukaodini@gmail.com"
         }
     ],
+    "require": {
+        "php": ">=7.3.0",
+        "monolog/monolog": "1.0.0"
+    },
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "Initframework\\": "src/"
+            "Framework\\": "src/Framework"
         }
     }
 }
