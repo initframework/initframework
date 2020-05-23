@@ -13,10 +13,9 @@
         }
     ],
     "require": {
-        "php": ">=7.3.0",
-        "monolog/monolog": "1.0.0"
+        "php": ">=7.3.0"
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
             "Framework\\": "src/Framework"
