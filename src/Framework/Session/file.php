@@ -4,7 +4,7 @@ class File {
 	private $directory;
 
 	public function read($session_id) {
-		$file = DIR_SESSION . '/sess_' . basename($session_id);
+		$file = SESSION_DIR . '/sess_' . basename($session_id);
 
 		if (is_file($file)) {
 			$handle = fopen($file, 'r');
@@ -42,7 +42,7 @@ class File {
 	}
 
 	public function destroy($session_id) {
-		$file = DIR_SESSION . '/sess_' . basename($session_id);
+		$file = SESSION_DIR . '/sess_' . basename($session_id);
 
 		if (is_file($file)) {
 			unset($file);
@@ -65,7 +65,7 @@ class File {
 		if ((rand() % $gc_divisor) < $gc_probability) {
 			$expire = time() - ini_get('session.gc_maxlifetime');
 
-			$files = glob(DIR_SESSION . '/sess_*');
+			$files = glob(SESSION_DIR . '/sess_*');
 
 			foreach ($files as $file) {
 				if (filemtime($file) < $expire) {

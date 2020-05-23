@@ -1,5 +1,5 @@
 <?php
-namespace Cache;
+namespace Framework\Cache;
 class Memcached {
 	private $expire;
 	private $memcached;

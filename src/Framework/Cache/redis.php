@@ -1,5 +1,5 @@
 <?php
-namespace Cache;
+namespace Framework\Cache;
 class Redis {
     private $expire;
     private $cache;
