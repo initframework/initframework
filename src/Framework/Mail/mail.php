@@ -1,80 +1,107 @@
 <?php
-namespace Mail;
-class Mail {
-	public function send() {
-		if (is_array($this->to)) {
-			$to = implode(',', $this->to);
-		} else {
-			$to = $this->to;
-		}
+namespace Framework\Mail;
+use Framework\Mail\PHPMailer;
+use Framework\Mail\SMTP;
+use Framework\Handler\IException;
 
-		$boundary = '----=_NextPart_' . md5(time());
+class Mail 
+{
 
-		$header  = 'MIME-Version: 1.0' . PHP_EOL;
-		$header .= 'Date: ' . date('D, d M Y H:i:s O') . PHP_EOL;
-		$header .= 'From: =?UTF-8?B?' . base64_encode($this->sender) . '?= <' . $this->from . '>' . PHP_EOL;
-		
-		if (!$this->reply_to) {
-			$header .= 'Reply-To: =?UTF-8?B?' . base64_encode($this->sender) . '?= <' . $this->from . '>' . PHP_EOL;
-		} else {
-			$header .= 'Reply-To: =?UTF-8?B?' . base64_encode($this->reply_to) . '?= <' . $this->reply_to . '>' . PHP_EOL;
-		}
-		
-		$header .= 'Return-Path: ' . $this->from . PHP_EOL;
-		$header .= 'X-Mailer: PHP/' . phpversion() . PHP_EOL;
-		$header .= 'Content-Type: multipart/mixed; boundary="' . $boundary . '"' . PHP_EOL . PHP_EOL;
+   private static $mail;
+   private static $body;
 
-		if (!$this->html) {
-			$message  = '--' . $boundary . PHP_EOL;
-			$message .= 'Content-Type: text/plain; charset="utf-8"' . PHP_EOL;
-			$message .= 'Content-Transfer-Encoding: 8bit' . PHP_EOL . PHP_EOL;
-			$message .= $this->text . PHP_EOL;
-		} else {
-			$message  = '--' . $boundary . PHP_EOL;
-			$message .= 'Content-Type: multipart/alternative; boundary="' . $boundary . '_alt"' . PHP_EOL . PHP_EOL;
-			$message .= '--' . $boundary . '_alt' . PHP_EOL;
-			$message .= 'Content-Type: text/plain; charset="utf-8"' . PHP_EOL;
-			$message .= 'Content-Transfer-Encoding: 8bit' . PHP_EOL . PHP_EOL;
+   public function setup()
+   {
+      self::$mail = new PHPMailer();
 
-			if ($this->text) {
-				$message .= $this->text . PHP_EOL;
-			} else {
-				$message .= 'This is a HTML email and your email client software does not support HTML email!' . PHP_EOL;
-			}
+      // set mailer
+      switch (MAIL_DRIVER) {
+         case 'mail':
+            self::$mail->IsMail();
+            break;
+         case 'smtp':
+            self::$mail->IsSMTP();
+            self::$mail->Host = MAIL_SMTP_HOST;
+            self::$mail->Port = MAIL_SMTP_PORT;
+            self::$mail->SMTPAuth = MAIL_SMTP_AUTH;
+            self::$mail->Username = MAIL_SMTP_USERNAME;
+            self::$mail->Password = MAIL_SMTP_PASSWORD;
+            self::$mail->SMTPSecure = MAIL_SMTP_SECURE != 'none' ? MAIL_SMTP_SECURE : '';
+            self::$mail->Timeout = MAIL_SMTP_TIMEOUT;
+            break;
+         case 'sendmail':
+            self::$mail->IsSendmail();
+            break;
+         default:
+            break;
+      }
+      
+   }
 
-			$message .= '--' . $boundary . '_alt' . PHP_EOL;
-			$message .= 'Content-Type: text/html; charset="utf-8"' . PHP_EOL;
-			$message .= 'Content-Transfer-Encoding: 8bit' . PHP_EOL . PHP_EOL;
-			$message .= $this->html . PHP_EOL;
-			$message .= '--' . $boundary . '_alt--' . PHP_EOL;
-		}
+   public static function asHTML(string $message)
+   {
+      self::setup();
+      self::$body = $message;
+      self::$mail->IsHTML(true);
+      return new Mail;
+   }
 
-		foreach ($this->attachments as $attachment) {
-			if (file_exists($attachment)) {
-				$handle = fopen($attachment, 'r');
+   public static function asText(string $message, $wrap = 50)
+   {
+      self::setup();
+      self::$body = $message;
+      self::$mail->WordWrap = $wrap;
+      self::$mail->IsHTML(false);
+      return new Mail;
+   }
 
-				$content = fread($handle, filesize($attachment));
+   public static function send(string $from, string $to, string $subject, string $reply = ':')
+   {
+      $from = explode(":",$from); $to = explode(":",$to); $reply = explode(":",$reply);
+      self::$mail->SetFrom($from[0], $from[1] ?? '');
+      self::$mail->AddAddress($to[0], $to[1] ?? '');
+      self::$mail->AddReplyTo($reply[0] ?? '', $reply[1] ?? '');
+      self::$mail->Subject = $subject;
+      self::$mail->Body = self::$body ?? '';
+      try {
+         if (self::$mail->Send()) {
+            return true;
+         } else {
+            throw new IException("Error: mail not sent.");
+            return false;
+         }
+      } catch (IException $ex) {
+         $ex->handle();
+      }
+   }
 
-				fclose($handle);
+   public static function sendMultiple(string $from, array $to, string $subject, string $reply = ':')
+   {
+      $from = explode(":",$from); $reply = explode(":",$reply);
+      foreach ($to as $person) {
+         $addressTo = explode(":",$person); 
+         self::$mail->AddAddress($addressTo[0], $addressTo[1] ?? '');
+      }
+      self::$mail->SetFrom($from[0], $from[1] ?? '');
+      self::$mail->AddReplyTo($reply[0] ?? '', $reply[1] ?? '');
+      self::$mail->Subject = $subject;
+      self::$mail->Body = self::$body ?? '';
+      try {
+         if (self::$mail->Send()) {
+            return true;
+         } else {
+            throw new IException("Error: mail not sent.");
+            return false;
+         }
+      } catch (IException $ex) {
+         $ex->handle();
+      }
+   }
 
-				$message .= '--' . $boundary . PHP_EOL;
-				$message .= 'Content-Type: application/octet-stream; name="' . basename($attachment) . '"' . PHP_EOL;
-				$message .= 'Content-Transfer-Encoding: base64' . PHP_EOL;
-				$message .= 'Content-Disposition: attachment; filename="' . basename($attachment) . '"' . PHP_EOL;
-				$message .= 'Content-ID: <' . urlencode(basename($attachment)) . '>' . PHP_EOL;
-				$message .= 'X-Attachment-Id: ' . urlencode(basename($attachment)) . PHP_EOL . PHP_EOL;
-				$message .= chunk_split(base64_encode($content));
-			}
-		}
+   public static function withAttachment($path, $name = '', $encoding = 'base64', $type = '', $disposition = 'attachment')
+   {
+      self::$mail->AddAttachment($path, $name = '', $encoding = 'base64', $type = '', $disposition = 'attachment');
+      return new Mail;
+   }
 
-		$message .= '--' . $boundary . '--' . PHP_EOL;
-
-		ini_set('sendmail_from', $this->from);
-
-		if ($this->parameter) {
-			mail($to, '=?UTF-8?B?' . base64_encode($this->subject) . '?=', $message, $header, $this->parameter);
-		} else {
-			mail($to, '=?UTF-8?B?' . base64_encode($this->subject) . '?=', $message, $header);
-		}
-	}
 }
