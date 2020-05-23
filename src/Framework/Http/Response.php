@@ -1,6 +1,6 @@
 <?php
 namespace Framework\Http;
-use Framework\Http\FrameworkException;
+use Framework\Handler\IException;
 
 class Response
 {
@@ -9,48 +9,48 @@ class Response
 
    public function __construct()
    {
-      
+      $this->remove_all_headers();
    }
 
    public function html(string $filename)
    {
-      // set content type to html
-      $this->add_header("Content-Type", "text/html; charset=UTF-8", true);
-      
-      $view = ""; $viewData = "";
-      $file = TEMPLATE_DIR . $filename;
+      try {
+         // set content type to html
+         $this->add_header("Content-Type", "text/html; charset=UTF-8", true);
+         
+         $view = ""; $viewData = "";
+         $file = TEMPLATE_DIR . $filename;
 
-      // if file exists
-      if (file_exists($file)) {
-         // Convert PHP Snippets
-         $view = \file_get_contents($file);
-      } else {
-         $stack = \debug_backtrace();
-         $errfile = $stack[0]['file'];
-         $errline = $stack[0]['line'];
-         echo "Error: " . $errfile . " on line " . $errline;
-         // Error::internalError("File <i><b>'$file'</b></i> doesn't exist in <b>$errfile</b> on line <b>$errline</b><!--");
+         // if file exists
+         if (file_exists($file)) {
+            // Convert PHP Snippets
+            return $view = \file_get_contents($file);
+         } else {
+            throw new IException("Error: File $filename does not exist!");
+         }
+      } catch(IException $ex) {
+         $ex->handle();
       }
    }
 
    public function xml(string $filename)
    {
-      // set content type to xml
-      $this->add_header("Content-Type", "application/xml; charset=UTF-8", true);
-      
-      $view = ""; $viewData = "";
-      $file = TEMPLATE_DIR . $filename;
+      try {
+         // set content type to xml
+         $this->add_header("Content-Type", "application/xml; charset=UTF-8", true);
+         
+         $view = ""; $viewData = "";
+         $file = TEMPLATE_DIR . $filename;
 
-      // if file exists
-      if (file_exists($file)) {
-         // Convert PHP Snippets
-         $view = \file_get_contents($file);
-      } else {
-         $stack = \debug_backtrace();
-         $errfile = $stack[0]['file'];
-         $errline = $stack[0]['line'];
-         echo "Error: " . $errfile . " on line " . $errline;
-         // Error::internalError("File <i><b>'$file'</b></i> doesn't exist in <b>$errfile</b> on line <b>$errline</b><!--");
+         // if file exists
+         if (file_exists($file)) {
+            // Convert PHP Snippets
+            $view = \file_get_contents($file);
+         } else {
+            throw new IException("Error: File $filename does not exist!");
+         }
+      } catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -61,112 +61,186 @@ class Response
       return json_encode($data, $options, $depth);
    }
 
-   public function render(string $filename, array $data = null)
+   private function import(string $view)
    {
-      // set content type to html
-      $this->add_header("Content-Type", "text/html; charset=UTF-8", true);
-
-      $view = ""; $viewData = "";
-      $file = TEMPLATE_DIR . $filename;
-
-      // render data
-      if ($data != null) {
-   
-         if (TEMPLATE_ENGINE == "default") {
-            $viewData = '<?php ';
-            foreach ($data as $key => $value) {
-               $viewData .= "$$key = '$value';";
+      try {
+         $catch = preg_match_all("/@import [A-Za-z0-9\/_.-]+\.html/", $view, $matches);
+         if ($catch > 0) {
+            $count = 0;
+            foreach ($matches[0] as $match) {
+               // replace / match with \/ in match for escaping directories
+               $re_match = str_replace('/', '\/', $match);
+               // identify the match
+               $view = preg_replace("/$re_match/", "@import $count", $view);
+               $match = explode("@import ", $match);
+               // extract required file
+               $file = $match[1];
+               // if file exists, get content
+               if (file_exists(TEMPLATE_DIR . $file)) {
+                  $contents = file_get_contents(TEMPLATE_DIR . $file);
+                  $view = preg_replace("/@import $count/", $contents, $view);
+               } else {
+                  $view = preg_replace("/@import $count/", "/$match/",$view);
+                  throw new IException("File: $file does not exist in the template directory!");
+               }
+               $count++;
             }
-            $viewData .= ' ?>';
-         } elseif (TEMPLATE_ENGINE == "mirror.js") {
-            $viewData = '@vars';
-            foreach ($data as $key => $value) {
-               $viewData .= "$$key = '$value';";
-            }
-            $viewData .= '@@vars';
+            return $this->import($view);
+         } else {
+            return $view;
          }
-
-      }
-      
-      // if file exists
-      if (file_exists($file)) {
-         // Convert PHP Snippets
-         $view = \file_get_contents($file);
-         // replace init snippets
-         // @assets
-         $view = preg_replace("/@assets\//", "public/assets/", $view);
-         // request methods
-         $view = preg_replace("/@method=PUT/", "<input type=\"hidden\" name=\"REQUEST_METHOD\" value=\"PUT\">", $view);
-         $view = preg_replace("/@method=PATCH/", "<input type=\"hidden\" name=\"REQUEST_METHOD\" value=\"PATCH\">", $view);
-         $view = preg_replace("/@method=DELETE/", "<input type=\"hidden\" name=\"REQUEST_METHOD\" value=\"DELETE\">", $view);
-         // view parameters
-         $view = preg_replace("/@vars/", $viewData, $view);
-         
-      } else {
-         $stack = \debug_backtrace();
-         $errfile = $stack[0]['file'];
-         $errline = $stack[0]['line'];
-         echo "Error: " . $errfile . " on line " . $errline;
-         // Error::internalError("File <i><b>'$file'</b></i> doesn't exist in <b>$errfile</b> on line <b>$errline</b><!--");
-      }
-      
-      if (TEMPLATE_ENGINE == "default")
-      {
-         // directives
-         // opening tags
-         $re = '/@(if|for|foreach|while) *[(]((?!@+).)+[)] */m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         foreach ($matches as $match ) {
-            $rMatch = $match[0];
-            $rMatch = str_replace("$","\\$", $rMatch);
-            $rMatch = str_replace("(","\\(", $rMatch);
-            $rMatch = str_replace(")","\\)", $rMatch);
-            $rMatch = str_replace("[","\\[", $rMatch);
-            $rMatch = str_replace("]","\\]", $rMatch);
-            $view = \preg_replace("/$rMatch/", str_replace("@", "<?php ", $match[0] . " { ?>"), $view);
-         }
-         // middle tags
-         $re = '/@elseif *[(]((?!@+).)+[)] */m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         foreach ($matches as $match ) {
-            $rMatch = $match[0];
-            $rMatch = str_replace("$","\\$", $rMatch);
-            $rMatch = str_replace("(","\\(", $rMatch);
-            $rMatch = str_replace(")","\\)", $rMatch);
-            $rMatch = str_replace("[","\\[", $rMatch);
-            $rMatch = str_replace("]","\\]", $rMatch);
-            $view = \preg_replace("/$rMatch/", str_replace("@", "<?php } ", $match[0] . " { ?>"), $view);
-         }
-         $re = '/@else */m';
-         $view = \preg_replace($re, "<?php } else { ?>", $view);
-         // closing tags
-         $re = '/@(endif|endfor|endforeach|endwhile) */m';
-         $view = \preg_replace($re, "<?php } ?>", $view);
-         // stmt
-         $re = '/@stmt((?!@+).)+;+/m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         foreach ($matches as $match ) {
-            $rMatch = $match[0];
-            $rMatch = str_replace("$","\\$", $rMatch);
-            $rMatch = str_replace("(","\\(", $rMatch);
-            $rMatch = str_replace(")","\\)", $rMatch);
-            $rMatch = str_replace("[","\\[", $rMatch);
-            $rMatch = str_replace("]","\\]", $rMatch);
-            $view = \preg_replace("/$rMatch/", str_replace("@stmt", "<?php ", $match[0] . " ?>"), $view);
-         }
-         // expressions
-         $re = '/[{]{2} *((?![{]{2})(?! +)(?![}]{2}).)+ *[}]{2}/m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         foreach ($matches as $match ) {
-            $rMatch = $match[0];
-            $view = \preg_replace(str_replace("$","[$]","/$rMatch/"), str_replace("{{", "<?=", str_replace("}}", "?>", $rMatch)), $view);
-         }
-         return (String)eval("?>" . $view . "<?php");
-      } elseif (TEMPLATE_ENGINE == "mirror.js") {
-         return $view;
+      } catch (IException $ex) {
+         $ex->handle();
       }
    }
 
+   public function render(string $filename, array $data = null)
+   {
+      try {
+         // set content type to html
+         $this->add_header("Content-Type", "text/html; charset=UTF-8", true);
+
+         $view = ""; $viewData = "";
+         $file = TEMPLATE_DIR . $filename;
+
+         // render data
+         if ($data != null) {
+      
+            if (TEMPLATE_ENGINE == "init") {
+               $viewData = "<?php ";
+               foreach ($data as $key => $value) {
+                  $viewData .= "$$key = '$value';";
+               }
+               $viewData .= " ?>";
+            } elseif (TEMPLATE_ENGINE == "mirror.js") {
+               $viewData = "@vars";
+               foreach ($data as $key => $value) {
+                  $viewData .= "$$key = '$value';";
+               }
+               $viewData .= "@@vars";
+            }
+         }
+
+         // preload user instance
+         if (TEMPLATE_ENGINE == "init") {
+            $viewData .= "<?php \$user = json_decode('" . \App\Services\User::user() . "'); ?>";
+         } elseif (TEMPLATE_ENGINE == "mirror.js") {
+            $viewData .= "@var \$user = " . \App\Services\User::user() . ";";
+         }
+         
+         if (file_exists($file)) {
+            // Convert PHP Snippets
+            $view = \file_get_contents($file);
+            // replace init snippets
+            // @import
+            $view = $this->import($view);
+            // @csrftoken
+            $view = preg_replace("/@csrftoken/", "<input type=\"hidden\" name=\"CSRFToken\" value=\"" . \App\Services\Auth::csrfToken() . "\"/>", $view);
+            // @assets
+            $view = preg_replace("/@assets\//", ASSETS_PATH, $view);
+            // @storage
+            $view = preg_replace("/@storage\//", STORAGE_PATH, $view);
+            // request methods
+            $view = preg_replace("/@method=PUT/", "<input type=\"hidden\" name=\"REQUEST_METHOD\" value=\"PUT\">", $view);
+            $view = preg_replace("/@method=PATCH/", "<input type=\"hidden\" name=\"REQUEST_METHOD\" value=\"PATCH\">", $view);
+            $view = preg_replace("/@method=DELETE/", "<input type=\"hidden\" name=\"REQUEST_METHOD\" value=\"DELETE\">", $view);
+            // view parameters
+            $view = preg_replace("/@vars/", $viewData, $view);
+            
+            if (TEMPLATE_ENGINE == "init")
+            {
+               // directives
+               // if-auth
+               $re = '/@if-auth */m';
+               preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+               foreach ($matches as $match ) {
+                  $rMatch = $match[0];
+                  $view = \preg_replace("/$rMatch/", "<?php if (\App\Services\User::\$auth == true) { ?>", $view);
+               }
+               // if-not-auth
+               $re = '/@if-not-auth */m';
+               preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+               foreach ($matches as $match ) {
+                  $rMatch = $match[0];
+                  $view = \preg_replace("/$rMatch/", "<?php if (\App\Services\User::\$auth != true) { ?>", $view);
+               }
+               // opening tags
+               $re = '/@(if|for|foreach|while) *[(]((?!@+).)+[)] */m';
+               preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+               foreach ($matches as $match ) {
+                  $rMatch = $match[0];
+                  $rMatch = str_replace("$","\\$", $rMatch);
+                  $rMatch = str_replace("(","\\(", $rMatch);
+                  $rMatch = str_replace(")","\\)", $rMatch);
+                  $rMatch = str_replace("[","\\[", $rMatch);
+                  $rMatch = str_replace("]","\\]", $rMatch);
+                  $view = \preg_replace("/$rMatch/", str_replace("@", "<?php ", $match[0] . " { ?>"), $view);
+               }
+               // middle tags
+               $re = '/@elseif *[(]((?!@+).)+[)] */m';
+               preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+               foreach ($matches as $match ) {
+                  $rMatch = $match[0];
+                  $rMatch = str_replace("$","\\$", $rMatch);
+                  $rMatch = str_replace("(","\\(", $rMatch);
+                  $rMatch = str_replace(")","\\)", $rMatch);
+                  $rMatch = str_replace("[","\\[", $rMatch);
+                  $rMatch = str_replace("]","\\]", $rMatch);
+                  $view = \preg_replace("/$rMatch/", str_replace("@", "<?php } ", $match[0] . " { ?>"), $view);
+               }
+               $re = '/@else */m';
+               $view = \preg_replace($re, "<?php } else { ?>", $view);
+               // closing tags
+               $re = '/@(endif|endforeach|endfor|endwhile) */m';
+               $view = \preg_replace($re, "<?php } ?>", $view);
+               // php
+               // $re = '/@php((?!@+).)+;+/m';
+               $re = '/@php((?!@+).)+;/m';
+               preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+               foreach ($matches as $match ) {
+                  $rMatch = $match[0];
+                  $rMatch = str_replace("$","\\$", $rMatch);
+                  $rMatch = str_replace("(","\\(", $rMatch);
+                  $rMatch = str_replace(")","\\)", $rMatch);
+                  $rMatch = str_replace("[","\\[", $rMatch);
+                  $rMatch = str_replace("]","\\]", $rMatch);
+                  $view = \preg_replace("/$rMatch/", str_replace("@php", "<?php ", $match[0] . " ?>"), $view);
+               }
+               // expressions
+               // $re = '/[{]{2} *((?![{]{2})(?! +)(?![}]{2}).)+ *[}]{2}/m';
+               $re = '/[{]{2} *((?![{]{2})(?![}]{2}).)+ *[}]{2}/m';
+               preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+               foreach ($matches as $match ) {
+                  if (trim($match[0], '{} ') != "" ) {
+                     $rMatch = trim($match[0]);
+                     $rMatch = str_replace("$","\\$", $rMatch);
+                     $rMatch = str_replace("(","\\(", $rMatch);
+                     $rMatch = str_replace(")","\\)", $rMatch);
+                     $rMatch = str_replace("[","\\[", $rMatch);
+                     $rMatch = str_replace("]","\\]", $rMatch);
+                     $rMatch = str_replace("?","\\?", $rMatch);
+                     $view = \preg_replace("/$rMatch/", str_replace("{{", "<?=", str_replace("}}", "?>", $match[0])), $view);
+                  }
+               }
+               
+               ob_start();
+               eval("?>" . $view . "<?php");
+               $view = ob_get_contents();
+               ob_end_clean();
+               return $view;
+
+            } elseif (TEMPLATE_ENGINE == "mirror.js") {
+               return $view;
+            }
+         } else {
+            throw new IException("Error: File $filename does not exist!");
+         }
+      } catch(IException $ex) {
+         $ex->handle();
+      }
+   }
+
+   public $response_sent = false;
    public function send(string $body = "", int $status = 200)
    {
       // Content from http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
@@ -268,30 +342,24 @@ class Response
             // set the response code
             \http_response_code($status);
 
-            // send the response message
+            $this->response_sent = true;
+            // send the response body
             exit($body);
          } else {
-            throw new FrameworkException($this);
+            throw new IException("Error: Invalid Response Code - $status");
          }
-      } catch (FrameworkException $ex) {
-         $ex->log_exception(); $ex->email_developer(); $ex->show_developer();
+      } catch (IException $ex) {
+         $ex->handle();
       }
       
    }
-
-   // handle the remaining response codes
-
-
-
-
-
-
+   
    // header control
-
    public function remove_all_headers()
    {
       if (!\headers_sent()) {
-         header_remove();
+         // echo "No header sent";
+         \header_remove();
       }
    }
 
@@ -334,19 +402,9 @@ class Response
       $this->send("", 302);
    }
 
-
-
-
-
-
-
    // authentication headers
    public function auth_basic($realm)
    {
-      // generate authentication parameters
-
-      // realm, a revelation to the client as to which username and password to provide
-
       // set the response header
       $this->remove_all_headers();
       $this->add_header('WWW-Authenticate', sprintf('Basic realm="%s"', $realm));
@@ -362,9 +420,6 @@ class Response
       $opaque = md5(uniqid());
       // qop, the quality of protection of the request
       $qop = "auth";
-
-      // realm, a revelation to the client as to which username and password to provide
-
       // set the response header
       $this->remove_all_headers();
       $this->add_header('WWW-Authenticate', sprintf('Digest realm="%s", qop="%s", nonce="%s", opaque="%s"', $realm, $qop, $nonce, $opaque));

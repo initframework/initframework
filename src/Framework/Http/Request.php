@@ -10,6 +10,8 @@ class Request
 
    private $server_ip;
 
+   private $csrftoken;
+
    private $path;
 
    private $scheme;
@@ -68,6 +70,9 @@ class Request
       // get the request body
       $this->get_body();
 
+      // get csrf token if any was sent
+      $this->get_csrftoken();
+
       // get the request uri
       $this->get_uri();
 
@@ -100,7 +105,7 @@ class Request
       $this->ip = $this->request['REMOTE_ADDR'];
       $this->server_ip = $this->request['SERVER_ADDR'];
    }
-   
+
    private function get_path()
    {
       /* 
@@ -189,6 +194,11 @@ class Request
       $this->body = $this->objectify($_POST ?? []);
    }
 
+   private function get_csrftoken()
+   {
+      $this->csrftoken = $this->body != [] ? $this->body->CSRFToken ?? '' : '' ;
+   }
+   
    private function get_files()
    {
       $this->files = $this->objectify($_FILES ?? []);
@@ -201,7 +211,7 @@ class Request
 
    private function get_referer()
    {
-      $this->referer = $this->request['HTTP_REFERER'] ?? '/';
+      $this->referer = $this->request['HTTP_REFERER'] ?? SERVER;
    }
 
    private function get_cookies()
@@ -336,6 +346,9 @@ class Request
 
    public function server_ip()
    { return $this->server_ip; }
+
+   public function csrftoken()
+   { return $this->csrftoken; }
 
    public function path()
    { return $this->path; }

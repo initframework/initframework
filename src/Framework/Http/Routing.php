@@ -7,6 +7,7 @@ use Framework\Http\Response;
 class Routing
 {
 
+   // TODO: check these patterns with real values
    private static $any_param_type = "/[0-9A-Za-z -_]+/";
 
    private static $digits_param_type  = "/[0-9]+/";                          //:d
@@ -142,6 +143,7 @@ class Routing
                      break;
                }
             }
+
 
             // get the value of the parameter, which is the uri chunk
             $route_param_value = $uri_chunk;
