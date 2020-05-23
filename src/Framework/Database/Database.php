@@ -2,7 +2,7 @@
 namespace Framework\Database;
 use PDO;
 use PDOException;
-use Framework\FrameworkException;
+use Framework\Handler\IException;
 
 class Database
 {
@@ -21,11 +21,15 @@ class Database
          $conn = new PDO("$this->driver:host=$this->host;dbname=$this->database;port=$this->port", $this->username, $this->password);
          // set the PDO error mode to exception
          $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+         if (!$conn) {
+            throw new IException("Database connection failed.");
+         }
       }
-      catch(PDOException $e)
-      {
-         // handle error
-         Error::internalError($e->getMessage());
+      catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
 
       return $conn;

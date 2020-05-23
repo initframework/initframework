@@ -1,27 +1,47 @@
 <?php
 namespace Framework\Database;
-use Framework\Database\Model;
+use Framework\Database\Database;
 
-class Designer extends Model
+class Designer extends Database
 {
+
+   private $conn;
 
    private $sql = "";
    private $open = false;
 
    private $fields = [];
+   private $nulls = [];
    private $field_index = -1;
    private $table;
    private $field;
 
-   private $alter_sql = [];
-   private $alter_index = 0;
+   private $keys = [];
+   private $key_index = 0;
+
+   public function __construct()
+   {
+      $this->conn = parent::__construct();
+   }
 
    // Designer methods
-   public function create(string $table, $dropIfExist)
+   public function create(string $table)
    {
+      // , bool $dropIfExists = false, ...$dropForeignKeys
       if (!empty($table)) {
          $this->table = $table;
-         $this->sql .= "CREATE TABLE $table";
+         // if ($dropIfExists == true) {
+         //    if ($dropForeignKeys != []) {
+         //       foreach ($dropForeignKeys as $tableKey) {
+         //          list($refTable, $key) = explode(".", $tableKey);
+         //          $this->sql .= 'ALTER TABLE ' . DB_DATABASE . '.' . $refTable . ' DROP FOREIGN KEY ' . DB_DATABASE . '_' . $table . '_fk_' . $key . '; ';
+         //       }
+         //    }
+         //    // CREATE TABLE `session` (
+         //    $this->sql .= "DROP TABLE IF EXISTS $table; ";
+         // }
+         $this->sql .= "CREATE TABLE IF NOT EXISTS " . DB_PREFIX . $table;
+         echo "\ncompiling query...\n";
       }
    }
 
@@ -109,7 +129,7 @@ class Designer extends Model
       return $this;
    }
 
-   public function decimal(string $name, float $size = 10.0)
+   public function decimal(string $name, string $size = '0,0')
    {
       // increment the field count
       $this->field_index++;
@@ -125,7 +145,7 @@ class Designer extends Model
       return $this;
    }
 
-   public function double(string $name, float $size = 10.0)
+   public function double(string $name, string $size = '0,0')
    {
       // increment the field count
       $this->field_index++;
@@ -141,7 +161,7 @@ class Designer extends Model
       return $this;
    }
 
-   public function float(string $name, float $size = 10.0)
+   public function float(string $name, string $size = '0,0')
    {
       // increment the field count
       $this->field_index++;
@@ -157,7 +177,7 @@ class Designer extends Model
       return $this;
    }
 
-   public function real(string $name, float $size = 10.0)
+   public function real(string $name, string $size = '0,0')
    {
       // increment the field count
       $this->field_index++;
@@ -603,7 +623,18 @@ class Designer extends Model
          return $this;
       }
 
-      $this->fields[$this->field_index][] = "NOT NULL";
+      $this->nulls[$this->field_index] = false;
+      return $this;
+   }
+
+   public function null()
+   {
+      // restrict from being the first attribute
+      if ($this->open == false){
+         return $this;
+      }
+
+      $this->nulls[$this->field_index] = true;
       return $this;
    }
    
@@ -639,29 +670,39 @@ class Designer extends Model
    // Primary Key
    public function primary()
    {
-      $this->alter_index++;
-      $this->alter_sql[$this->alter_index] = "ADD PRIMARY KEY ('" . $this->field . "')";
+      $this->key_index++;
+      $this->keys[$this->key_index] = "PRIMARY KEY (" . $this->field . ")";
+      // $this->fields[$this->field_index][] = "PRIMARY KEY";
       return $this;
    }
 
-   // Primary Key
+   // Index Key
    public function index()
    {
-      $this->alter_index++;
-      $this->alter_sql[$this->alter_index] = "ADD INDEX KEY ('" . $this->field . "')";
+      $this->key_index++;
+      $this->keys[$this->key_index] = "INDEX (" . $this->field . ")";
+      // $this->fields[$this->field_index][] = "INDEX ('" . $this->field . "')";
+      return $this;
+   }
+
+   // Index Key
+   public function unique()
+   {
+      $this->key_index++;
+      $this->keys[$this->key_index] = "UNIQUE (" . $this->field . ")";
+      // $this->fields[$this->field_index][] = "UNIQUE";
       return $this;
    }
 
    // Foreign key
-   public function foreign_key(string $local_field, string $foreign_table, string $foreign_field, string $on_update = "NO ACTION", string $on_delete = "NO ACTION")
+   public function foreign(string $local_field, string $foreign_table, string $foreign_field, string $on_delete = "NO ACTION", string $on_update = "NO ACTION")
    {
-      $this->alter_index++;
+      $this->key_index++;
       $accepted = ["NO ACTION", "RESTRICT", "CASCADE", "SET NULL"];
 
       if (in_array($on_delete, $accepted) && in_array($on_update, $accepted)) {
-         
-         $this->fields[$this->alter_index] = "ADD FOREIGN KEY ($local_field) REFERENCES $foreign_table($foreign_field) ON DELETE $on_delete ON UPDATE $on_update, ";
-         
+         $constraint = 'CONSTRAINT ' . DB_DATABASE . '_' . $foreign_table . '_fk_' . $foreign_field;
+         $this->keys[$this->key_index] = "$constraint FOREIGN KEY ($local_field) REFERENCES $foreign_table($foreign_field) ON UPDATE $on_update ON DELETE $on_delete";
       }
 
       return $this;
@@ -673,28 +714,50 @@ class Designer extends Model
    public function exe()
    {
       // Create query for table
-      $fields = [];
+      $query = []; $count = 0;
       foreach ($this->fields as $field) {
-         $fields[] = implode(" ", $field);
+         $null = (isset($this->nulls[$count]) && $this->nulls[$count] == true) ? "" : " NOT NULL" ;
+         $query[] = implode(" ", $field) . $null;
+         $count++;
       }
-      $this->sql .= " ( " . implode(", ", $fields) . " ) ";
-
-      // Alter query for table keys
-      $alter = "";
-      if ($this->alter_index > 0) {
-         $alter .= "ALTER TABLE '{$this->table}' ";
-         $alter .= implode(", ", $this->alter_sql);
+      foreach ($this->keys as $key) {
+         $query[] = $key;
       }
+      $this->sql .= " ( " . implode(", ", $query) . " ) ";
 
+      echo "executing query:\n\n" . $this->sql;
 
-      echo $this->sql;
-      echo "\n\n";
-      echo $alter;
+      try {
+         $stmt = $this->conn->prepare($this->sql);
+         $result = $stmt->execute();
+         if ($result) {
+            echo "\n\nexecuted successfully!\n";
+         } else {
+            throw new PDOException("\n\nexecution failed!\n", 1);
+         }
+      }
+      catch(PDOException $e) {
+         // echo $e->getMessage();
+      }
+   
+      // clear properties
+      $this->clear();
 
+   }
+
+   private function clear()
+   {
       $this->sql = "";
-      $this->fields = [];
-      $this->field_index = -1;
       $this->open = false;
+
+      $this->fields = [];
+      $this->nulls = [];
+      $this->field_index = -1;
+      $this->table;
+      $this->field;
+
+      $this->keys = [];
+      $this->key_index = 0;
    }
 
 

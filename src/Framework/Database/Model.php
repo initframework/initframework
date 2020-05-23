@@ -1,7 +1,7 @@
 <?php
 namespace Framework\Database;
 use Framework\Database\Database;
-use Framework\FrameworkException;
+use Framework\Handler\IException;
 use PDO;
 
 class Model extends Database
@@ -51,10 +51,11 @@ class Model extends Database
 
          return true;
       }
-      catch(PDOException $e)
-      {
-         // handle error
-         Error::internalError($e->getMessage());
+      catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
 
    }
@@ -82,22 +83,14 @@ class Model extends Database
 
          $data = $stmt->fetchAll();
 
-         $response = ["flag"=>true, "data"=>$data];
-
-         if (count($response['data']) > 0){
-            $response = ["flag"=>true, "data"=>$data];
-         } else {
-            $response = ["flag"=>false, "data"=>"no data is gotten"];
-         }
-
-         return $response;
-
-      }
-      catch(PDOException $e) {
-         // handle error
-         $response = ["flag"=>false, "data"=>"Error: " . $e->getMessage()];
+         return $data;
          
-         return $response;
+      }
+      catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -130,11 +123,12 @@ class Model extends Database
          } else {
             return false;
          }
-
    
-      } catch (PDOException $e){
-         // handle error
-         Error::internalError($e->getMessage());
+      } catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -152,10 +146,19 @@ class Model extends Database
    
          $this->conn->exec($query);
          
-         return true;
-      } catch (PDOException $e) {
-         // handle error
-         Error::internalError($e->getMessage());
+         $affected = $this->rowsAffected();
+
+         if ($affected > 0){
+            return true;
+         } else {
+            return false;
+         }
+
+      } catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -253,21 +256,14 @@ class Model extends Database
 
          $data = $stmt->fetchAll();
 
-         $response = ["flag"=>true, "data"=>$data];
-
-         if (count($response['data']) > 0){
-            $response = ["flag"=>true, "data"=>$data];
-         } else {
-            $response = ["flag"=>false, "data"=>"no data is gotten"];
-         }
-
-         return $response;
+         return $data;
 
       }
-      catch(PDOException $e) {
-         // handle error
-         $response = ["flag"=>false, "data"=>"Error: " . $e->getMessage()];
-         return $response;
+      catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -299,9 +295,11 @@ class Model extends Database
          }
    
       }
-      catch(PDOException $e) {
-         // handle error
-         Error::internalError($e->getMessage());
+      catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -331,9 +329,11 @@ class Model extends Database
          return $response[0];
 
       }
-      catch(PDOException $e) {
-         // handle error
-         Error::internalError($e->getMessage());
+      catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -362,9 +362,11 @@ class Model extends Database
          }
 
       }
-      catch(PDOException $e) {
-         // handle error
-         Error::internalError($e->getMessage());
+      catch(PDOException $ex) {
+         throw new IException($ex->getMessage());
+      }
+      catch(IException $ex) {
+         $ex->handle();
       }
    }
 
@@ -423,7 +425,8 @@ class Model extends Database
    {
       $value ?? "";
 
-      $value = (null !==  (get_magic_quotes_gpc())) ? stripcslashes($value) : $value;
+      // $value = real_escape_string($value);
+      // $value = (null !==  (get_magic_quotes_gpc())) ? stripcslashes($value) : $value;
       $value = strip_tags($value);
       $value = htmlentities($value);
       // return $value;
