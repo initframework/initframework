@@ -1,0 +1,7 @@
+#!/usr/bin/env php
+#!/usr/bin/php
+<?php
+include 'app/config.php';
+include 'vendor/autoload.php';
+use Library\Gulp\Init;
+new Init($argv);

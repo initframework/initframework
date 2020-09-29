@@ -1,0 +1,53 @@
+
+Init Framework v2
+
+Response:
+   ☐ Use standard response functions (success & error) with the format {status, code, message, data}
+   ☐ make responses simple to use as a function rather than a method
+   ☐ review the template renderer
+   ☐ return responses based on the content type sent in the request header
+
+Middlewares:
+   ☐ Add Web Session Auth Middleware
+   ☐ Add Web JWT Auth Middleware
+   ☐ Add API Session Auth Middleware
+   ☐ Add API JWT Auth Middleware
+   ☐ Write Test for all Middlewares
+
+Request:
+   ✔ Test that the Request class is working @started(20-09-28 23:48) @done(20-09-29 01:43) @lasted(1h55m34s)
+
+Router:
+   ✔ Link the router to the index @started(20-09-28 23:14) @done(20-09-29 01:43) @lasted(2h29m48s)
+   ✔ Test the router @started(20-09-29 01:43) @done(20-09-29 07:20) @lasted(5h37m49s)
+   ✔ Accept Multiple Route Handlers (including Middlewares) in the Router @started(20-09-29 01:43) @done(20-09-29 07:11) @lasted(5h28m57s)
+   ✔ Find a suitable way to pass the middlewares and the controller method/function to the route declaration @started(20-09-29 01:44) @done(20-09-29 07:11) @lasted(5h27m48s)
+
+Configurations:
+   ☐ try using the dotenv vendor library to hold sensitive user info
+   ☐ test that the php.ini file contains configurations for:
+      ☐ session operation (autostart)
+      ☐ cache operation
+      ☐ error logging operation
+      ☐ max execution time
+      ☐ file upload size
+      ☐ max post input
+      ☐ error display
+      ☐ etc
+   ☐ Configure the .htaccess file to use the standard format and put asset accessibility into consideration)
+
+Controllers:
+   ✔ Build controllers to be a one endpoint/controller rather than putting them in a methods @done(20-09-29 07:12)
+   ✔ Allow nesting of controller files for categorizing @done(20-09-29 07:15)
+
+Schema:
+   ☐ Make building models with running migration possible
+   ☐ Store migration schemas in the schema_migration_tbl after every successful migration
+
+Init:
+   ☐ After building a model, check the database to retrieve its fields and then use them to create code snippets for the model
+   ☐ when creating a new project, create a .vscode folder and a <project-name>.code-snippets file for (VS Code) and an equivalent for Sublime Text, Atom, and other Code editiors
+   ☐ Define the cli commands that can be used
+
+Test:
+   ☐ Write test for all implementations in the .lib folder

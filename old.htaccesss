@@ -1,0 +1,26 @@
+<IfModule mod_rewrite.c>
+
+   # Turn on the RewriteEngine
+      RewriteEngine On
+   
+   # Prevent directory listings
+      Options All -Indexes
+
+   # The Rewrite Rules
+
+   # Prevent these files from redirecting to index.php
+      # Note: Separate files or directories with the pipe character (|)
+      # Warning: Do not leave any trailing pipe character (|)
+      RewriteRule ^(public/assets/|storage/public/) - [NC,L]
+
+   # Redirect all entry point to index.php
+      RewriteRule ^ public/index.php [NC,L]
+
+   # Deny access to these files
+      # Note: Files added here are files that are not redirected to the index.php
+      <FilesMatch "(.htaccess|.gitignore|php.ini|composer.json|composer.lock)$">
+         order allow,deny
+         Deny from all
+      </FilesMatch>
+
+</IfModule>
