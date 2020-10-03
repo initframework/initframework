@@ -1,0 +1,21 @@
+[Sat 03-10-2020 04:49:01 PM CEST] [8] Undefined variable: Init
+	>> C:\xampp\htdocs\initframework\index.php on line 31
+	>>  on line 
+	>> C:\xampp\htdocs\initframework\.lib\Http\Router.php on line 71
+	>> C:\xampp\htdocs\initframework\index.php on line 54
+[Sat 03-10-2020 04:49:27 PM CEST] [8] Undefined variable: Init
+	>> C:\xampp\htdocs\initframework\index.php on line 31
+	>>  on line 
+	>> C:\xampp\htdocs\initframework\.lib\Http\Router.php on line 71
+	>> C:\xampp\htdocs\initframework\index.php on line 54
+[Sat 03-10-2020 04:50:15 PM CEST] [8] Undefined variable: Init
+	>> C:\xampp\htdocs\initframework\.lib\Http\Response.php on line 314
+	>> C:\xampp\htdocs\initframework\index.php on line 31
+	>>  on line 
+	>> C:\xampp\htdocs\initframework\.lib\Http\Router.php on line 71
+	>> C:\xampp\htdocs\initframework\index.php on line 54
+[Sat 03-10-2020 05:00:46 PM CEST] [8] Undefined variable: Init
+	>> C:\xampp\htdocs\initframework\index.php on line 31
+	>>  on line 
+	>> C:\xampp\htdocs\initframework\.lib\Http\Router.php on line 71
+	>> C:\xampp\htdocs\initframework\index.php on line 54

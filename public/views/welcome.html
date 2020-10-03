@@ -5,28 +5,39 @@
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <meta http-equiv="X-UA-Compatible" content="ie=edge">
    <title>Welcome | Initframework</title>
-   <link rel="shortcut icon" href="@assets/imgs/favicon.ico" type="image/x-icon">
+   <link rel="shortcut icon" href="{{ asset('/imgs/favicon.ico') }}" type="image/x-icon">
 
    <!-- Jquery -->
-   <script src="@assets/js/jquery.min.js"></script>
+   <script src="{{ asset('/js/jquery.min.js') }}"></script>
    <!-- Popper -->
-   <script src="@assets/js/popper.min.js"></script>
+   <script src="{{ asset('/js/popper.min.js') }}"></script>
    <!-- Bootstrap -->
-   <script src="@assets/js/bootstrap.min.js"></script>
-   <link rel="stylesheet" href="@assets/css/bootstrap.css">
+   <script src="{{ asset('/js/bootstrap.min.js') }}"></script>
+   <link rel="stylesheet" href="{{ asset('/css/bootstrap.css') }}">
    <!-- Font Awesome -->
-	<link rel="stylesheet" href="@assets/css/fontawesome.css">
+	<link rel="stylesheet" href="{{ asset('/css/fontawesome.css') }}">
    <!-- Custom -->
-   <script src="@assets/js/main.js"></script>
-   <link rel="stylesheet" href="@assets/css/main.css">
+   <script src="{{ asset('/js/main.js') }}"></script>
+   <link rel="stylesheet" href="{{ asset('/css/main.css') }}">
 
 </head>
 <body class="my-5 bg-white text-center">
-   
+   @vars
+   @php $name = "Ebuka";
    <p class="display-y">
       Welcome to
       <br>
-      InitFramework
+      {{ $myapp }}
+   </p>
+
+   <p>My name is {{$name}}</p>
+
+   <p>
+      @if (!empty($name))
+         <span>Name is not empty</span>
+      @else
+         <span>Name is empty</span>
+      @endif
    </p>
 
 </body>

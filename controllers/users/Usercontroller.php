@@ -1,7 +1,6 @@
 <?php
 namespace Controllers\Users;
 use Library\Http\Request;
-use Library\Http\Response;
 
 class Usercontroller
 {

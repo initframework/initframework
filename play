@@ -7,6 +7,7 @@
       Options All -Indexes
 
    # The Rewrite Rules
+      RewriteBase public/
 
    # Prevent these files from redirecting to index.php
       # Note: Separate files or directories with the pipe character (|)
@@ -22,5 +23,17 @@
          order allow,deny
          Deny from all
       </FilesMatch>
+
+</IfModule>
+
+<IfModule mod_rewrite.c>
+
+  RewriteEngine On
+  RewriteBase public/
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_FILENAME} !-l
+  RewriteRule . /index.html [L]
 
 </IfModule>

@@ -1,7 +1,7 @@
 <?php
 
 // SERVER
-define('DEV_SERVER', 'http://localhost/initframework');
+define('DEV_SERVER', 'http://localhost:8080');
 define('TEST_SERVER', 'http://test.initframework.com');
 define('LIVE_SERVER', 'http://test.initframework.com');
 define('SERVER', DEV_SERVER);
@@ -32,7 +32,7 @@ define('MAINTENANCE_ALLOWED_IP', [
 define('ERROR_DISPLAY', false);
 define('ERROR_LOG', true);
 define('ERROR_LOG_FILE', APPLICATION_DIR . 'storage/logs/error.log');
-define('EMAIL_LOG', true);
+define('EMAIL_LOG', false);
 define('EMAIL_LOG_ADDRESS', 'postmaster@localhost');
 
 

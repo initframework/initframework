@@ -2,10 +2,10 @@
 Init Framework v2
 
 Response:
-   ☐ Use standard response functions (success & error) with the format {status, code, message, data}
-   ☐ make responses simple to use as a function rather than a method
-   ☐ review the template renderer
-   ☐ return responses based on the content type sent in the request header
+   ✔ Use standard response functions (success & error) with the format {status, code, message, data} @started(20-09-29 20:09) @done(20-10-02 23:31) @lasted(3d3h22m38s)
+   ✔ make responses simple to use as a function rather than a method @started(20-10-01 23:09) @done(20-10-01 23:10) @lasted(1m2s)
+   ✔ review the template renderer @done(20-10-03 15:51)
+   ✘ return responses based on the content type sent in the request header @cancelled(20-10-02 22:52)
 
 Middlewares:
    ☐ Add Web Session Auth Middleware
@@ -22,6 +22,8 @@ Router:
    ✔ Test the router @started(20-09-29 01:43) @done(20-09-29 07:20) @lasted(5h37m49s)
    ✔ Accept Multiple Route Handlers (including Middlewares) in the Router @started(20-09-29 01:43) @done(20-09-29 07:11) @lasted(5h28m57s)
    ✔ Find a suitable way to pass the middlewares and the controller method/function to the route declaration @started(20-09-29 01:44) @done(20-09-29 07:11) @lasted(5h27m48s)
+   ☐ Allow named route
+   ☐ Allow regex to be entered for route parameter matching
 
 Configurations:
    ☐ try using the dotenv vendor library to hold sensitive user info
@@ -34,7 +36,7 @@ Configurations:
       ☐ max post input
       ☐ error display
       ☐ etc
-   ☐ Configure the .htaccess file to use the standard format and put asset accessibility into consideration)
+   ✔ Configure the .htaccess file to use the standard format and put asset accessibility into consideration) @done(20-10-03 16:42)
 
 Controllers:
    ✔ Build controllers to be a one endpoint/controller rather than putting them in a methods @done(20-09-29 07:12)
@@ -48,6 +50,7 @@ Init:
    ☐ After building a model, check the database to retrieve its fields and then use them to create code snippets for the model
    ☐ when creating a new project, create a .vscode folder and a <project-name>.code-snippets file for (VS Code) and an equivalent for Sublime Text, Atom, and other Code editiors
    ☐ Define the cli commands that can be used
+   ☐ Update the gulp class
 
 Test:
    ☐ Write test for all implementations in the .lib folder

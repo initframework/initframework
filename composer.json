@@ -29,6 +29,10 @@
             "Library\\": ".lib",
             "App\\": "app",
             "Controllers\\": "controllers"
-        }
+        },
+        "files": [
+            ".lib/Http/Response.php",
+            ".lib/ErrorHandler.php"
+        ]
     }
 }

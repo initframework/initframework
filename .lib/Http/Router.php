@@ -1,7 +1,7 @@
 <?php
 namespace Library\Http;
 use Library\Http\Request;
-// use Framework\Http\Response;
+// use Library\Http\Response;
 
 class Router
 {
@@ -52,20 +52,6 @@ class Router
       return $result;
    }
 
-   private static function invalidMethodHandler()
-   {
-      // header("{$this->request->serverProtocol} 405 Method Not Allowed");
-      \http_response_code(404);
-      exit(self::$request->serverProtocol ." 405 Method Not Allowed");
-   }
-
-   private static function defaultRequestHandler()
-   {
-      // header("{$this->request->serverProtocol} 404 Not Found");
-      \http_response_code(404);
-      exit(self::$request->serverProtocol . " 404 Not Found");
-   }
-
    /**
     * Resolves a route
     */
@@ -88,7 +74,7 @@ class Router
          }
       }
 
-      self::defaultRequestHandler();
+      notFoundError(self::$request);
       return;
    }
 

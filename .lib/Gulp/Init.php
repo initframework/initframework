@@ -111,12 +111,20 @@ class Init
 
 }
 
+/*
+Commands
 
-// Migrations
-// php init create migration dest
-// php init clone migration src dest
-// php init run migration src
+init -h
+init new -h
+init new app <app>
+init new controller <controller>
+init new model <model> <database-table>
+init new view <view>
+init new migration <migration> [-model <model> <database-table>]
+init new middleware <middleware>
+init run -h
+init run app
+init run migrations
+init run migration <migration>
 
-// echo json_encode($args);
-
-// php init command options args [--tags]
+*/

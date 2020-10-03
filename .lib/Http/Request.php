@@ -18,6 +18,7 @@ class Request
          $this->{$this->toCamelCase($key)} = $value;
          // echo "$key     $value<br>";
       }
+      // uri
       $this->requestUri = preg_replace("/\?.+/m", "", $this->requestUri);
       // route params would be defined by the router
       $this->routeParams = null;
@@ -29,6 +30,11 @@ class Request
          {
             $this->body[$key] = filter_input(INPUT_POST, $key, FILTER_SANITIZE_SPECIAL_CHARS);
          }
+      }
+      // accomodating request methods from html forms (spoofing)
+      if ($this->requestMethod == "POST" && isset($this->body['HTTP_REQUEST_METHOD']) && in_array($this->body['HTTP_REQUEST_METHOD'], ["PUT", "PATCH", "DELETE"]))
+      {
+         $this->requestMethod = $this->body['HTTP_REQUEST_METHOD'];
       }
    }
 
@@ -70,7 +76,9 @@ class Request
 
    public function __desctruct()
    {
-      // unset($this);
+      foreach($this as $obj) {
+         unset($obj);
+      }
    }
 
 }
