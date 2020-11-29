@@ -1,48 +1,50 @@
 <?php
 namespace Library\Database;
+use Library\Database\Database;
 use PDOException;
 use PDO;
 use Exception;
 
 class Model extends Database
 {
-   private $conn;
-   private $affected;
-   private $table;
+   private static $conn;
+   private static $affected;
+   private static $table;
 
-   private $joinFields;
-   private $joinCondition;
-   private $joins = [];
+   private static $joinFields;
+   private static $joinCondition;
+   private static $joins = [];
 
    /**
     * The Model construct
     *
     * @param string $table is the table name for the model
     */
-   public function __construct(string $table)
+   private static function instance()
    {
-      $this->conn = parent::__construct();
-      $this->table = $table;
-      return $this;
+      self::$conn = self::getInstance();
+      self::$table = DB_PREFIX . get_called_class()::$table;
    }
 
    /**
-    * @summary creates a new record in the {$this->table}
+    * @summary creates a new record in the ". self::$table ."
     * @param array $inputs is an associative array of field name and the field value
     * @return bool to tell if the execution was successful or not
     */
-   public function create(array $inputs) : bool
+   public static function create(array $inputs) : bool
    {
+      self::instance();
       try {
          // make the fields bindable
-         list($fields, $bindFields, $bindFieldsStr, $bindValues) = $this->bindCreate($inputs);
-         
+         list($fields, $bindFields, $bindFieldsStr, $bindValues) = self::bindCreate($inputs);
+         $fields = implode(", ", $fields);
+
          // the command query
-         $query = "INSERT INTO {$this->table} ({$fields}) 
+         $query = "INSERT INTO ". self::$table ." ({$fields}) 
          VALUES ({$bindFieldsStr}) ";
 
          // prepare query
-         $stmt = $this->conn->prepare($query);
+         $stmt = self::$conn->prepare($query);
 
          // bind fields to their values
          for ($i = 0; $i < count($bindFields); $i++) {
@@ -52,7 +54,7 @@ class Model extends Database
          // execute the query
          $stmt->execute();
 
-         $this->affected = $stmt->rowCount();
+         self::$affected = $stmt->rowCount();
 
          if ($stmt->rowCount() > 0){
             return true;
@@ -61,7 +63,59 @@ class Model extends Database
          }
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
+      }
+
+   }
+
+   /**
+    * @summary creates a multiple records in the ". self::$table ."
+    * @param array $inputs is a multi dimensional associative array of field name and the field value
+    * @return bool to tell if the execution was successful or not
+    */
+   public static function createMany(array ...$inputs) : bool
+   {
+      self::instance();
+
+      try {
+         // make the fields bindable
+         foreach ($inputs as $input) {
+            list($fields, $bindFields[], $bindFieldsStr[], $bindValues[]) = self::bindCreate($input);
+         }
+         
+         $fields = implode(", ", $fields);
+         $_ENV['count'] = 0;
+         $bindFieldsStr = implode(", ", array_map(function($fields) { $fields = implode(",",array_map(function($field) { return $field . "_" . $_ENV['count']++; }, explode(",", $fields))); return "($fields)"; }, $bindFieldsStr));
+         $_ENV['count'] = 0;
+         $bindFields = array_map(function($fields) { return $fields . "_" . $_ENV['count']++; }, array_merge(...$bindFields));
+         $_ENV['count'] = 0;
+         $bindValues = array_merge(...$bindValues);
+
+         // the command query
+         $query = "INSERT INTO ". self::$table ." ({$fields}) 
+         VALUES {$bindFieldsStr} ";
+
+         // prepare query
+         $stmt = self::$conn->prepare($query);
+
+         // bind fields to their values
+         for ($i = 0; $i < count($bindFields); $i++) {
+            $stmt->bindParam($bindFields[$i], $bindValues[$i]);
+         }
+
+         // execute the query
+         $stmt->execute();
+
+         self::$affected = $stmt->rowCount();
+
+         if ($stmt->rowCount() > 0){
+            return true;
+         } else {
+            return false;
+         }
+      }
+      catch(PDOException $ex) {
+         trigger_error($ex->getMessage());
       }
 
    }
@@ -72,23 +126,15 @@ class Model extends Database
     * @param array $inputs is an associative array of field name and the field value
     * @return array $query is an array of string fields, string bindFields, array bindValues 
     */
-   private function bindCreate(array $inputs) : array
+   private static function bindCreate(array $inputs) : array
    {
-      $fields = array();
-      $bindFields = array();
-      $bindValues = array();
-
-      foreach ($inputs as $field => $value) {
-         $fields[] = $field;
-         $bindFields[] = ":" . $field;
-         $bindValues[] = $this->sanitize($value ?? "NULL");
-      }
-
-      $fields = implode(',', $fields);
+      self::instance();
+      $fields = array_keys($inputs);
+      $bindFields = array_map(function($field) { return ":" . $field; }, $fields);
+      $bindValues = array_map(function($value) { return self::sanitize($value); }, array_values($inputs));
       $bindFieldsStr = implode(',', $bindFields);
       
-      $query = [$fields, $bindFields, $bindFieldsStr, $bindValues];
-      return $query;
+      return [$fields, $bindFields, $bindFieldsStr, $bindValues];
    }
 
    /**
@@ -96,9 +142,10 @@ class Model extends Database
     *
     * @return int $lastId is the index of the last record inserted
     */
-   public function lastId() : int
+   public static function lastId() : int
    {
-      $lastId = $this->conn->lastInsertId();
+      self::instance();
+      $lastId = self::$conn->lastInsertId();
       return $lastId;
    }
 
@@ -108,19 +155,20 @@ class Model extends Database
     * @param array $updates is an associative array of field name and the field value
     * @return bool to tell if the execution was successful or not
     */
-   public function update(array $updates, string $condition = "WHERE 1") : bool
+   public static function update(array $updates, string $condition = "WHERE 1") : bool
    {
+      self::instance();
       try {
 
-         $sets = $this->bindUpdate($updates);
+         $sets = self::bindUpdate($updates);
 
-         $query = "UPDATE {$this->table} SET {$sets} {$condition}";
+         $query = "UPDATE ". self::$table ." SET {$sets} {$condition}";
          
-         $stmt = $this->conn->prepare($query);
+         $stmt = self::$conn->prepare($query);
    
          $stmt->execute();
 
-         $this->affected = $stmt->rowCount();
+         self::$affected = $stmt->rowCount();
 
          if ($stmt->rowCount() > 0){
             return true;
@@ -129,7 +177,7 @@ class Model extends Database
          }
    
       } catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
  
@@ -139,12 +187,13 @@ class Model extends Database
     * @param array $updates is an associative array of field name and the field value
     * @return string $sets a string of MySQL SET statement
     */
-   private function bindUpdate(array $updates) : string
+   private static function bindUpdate(array $updates) : string
    {
+      self::instance();
       $sets = array();
 
       foreach ($updates as $field => $value) {
-         $value = $this->sanitize($value ?? "NULL");
+         $value = self::sanitize($value ?? "NULL");
          $sets[] = $field . " = '" . $value . "'";
       }
 
@@ -156,17 +205,18 @@ class Model extends Database
     *
     * @return bool to tell if the execution was successful or not
     */
-   public function delete(string $condition = "WHERE 1") : bool
+   public static function delete(string $condition = "WHERE 1") : bool
    {
+      self::instance();
       try {
          
-         $query = "DELETE FROM {$this->table} {$condition}";
+         $query = "DELETE FROM ". self::$table ." {$condition}";
    
-         $stmt = $this->conn->prepare($query);
+         $stmt = self::$conn->prepare($query);
    
          $stmt->execute();
          
-         $this->affected = $stmt->rowCount();
+         self::$affected = $stmt->rowCount();
 
          if ($stmt->rowCount() > 0){
             return true;
@@ -175,7 +225,7 @@ class Model extends Database
          }
 
       } catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
@@ -184,9 +234,10 @@ class Model extends Database
     * 
     * @return int $affected is the number of rows affected
     */
-   public function rowsAffected() : int
+   public static function rowsAffected() : int
    {
-      return $this->affected;
+      self::instance();
+      return self::$affected;
    }
 
    /**
@@ -194,13 +245,14 @@ class Model extends Database
     * 
     * @return bool true is the condition is met
     */
-   public function exist(string $condition = "WHERE 1") : bool
+   public static function exist(string $condition = "WHERE 1") : bool
    {
+      self::instance();
       try {
 
-         $query = "SELECT COUNT(*) AS count FROM {$this->table} {$condition}";
+         $query = "SELECT COUNT(*) AS count FROM ". self::$table ." {$condition}";
 
-         $stmt = $this->conn->prepare($query);
+         $stmt = self::$conn->prepare($query);
          
          $stmt->execute();
    
@@ -216,7 +268,7 @@ class Model extends Database
    
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
@@ -226,13 +278,15 @@ class Model extends Database
     * @param string $fields is a string of fields delimited by commas(,)
     * @return array $response is an associative array: flag - a boolean to indicate if data was read; data - an associative array of the selected records OR the error message
     */
-   public function findAll(string $fields = "*", string $condition = "WHERE 1") : array
+   public static function findAll(string $fields = "*", string $condition = "WHERE 1") : array
    {
+      self::instance();
       try {
 
-         $query = "SELECT {$fields} FROM {$this->table} {$condition}";
+         $query = "SELECT {$fields} FROM ". self::$table ." {$condition}";
+         // exit($query);
 
-         $stmt = $this->conn->prepare($query);
+         $stmt = self::$conn->prepare($query);
          
          $stmt->execute();
    
@@ -244,7 +298,7 @@ class Model extends Database
          
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
@@ -254,13 +308,14 @@ class Model extends Database
     * @param string $fields is a string of fields delimited by commas(,)
     * @return array $response is an associative array: flag - a boolean to indicate if data was read; data - an associative array of the selected records OR the error message
     */
-   public function findOne(string $fields = "*", string $condition = "WHERE 1") : array
+   public static function findOne(string $fields = "*", string $condition = "WHERE 1") : array
    {
+      self::instance();
       try {
 
-         $query = "SELECT {$fields} FROM {$this->table} {$condition} LIMIT 1";
+         $query = "SELECT {$fields} FROM ". self::$table ." {$condition} LIMIT 1";
 
-         $stmt = $this->conn->prepare($query);
+         $stmt = self::$conn->prepare($query);
          
          $stmt->execute();
    
@@ -272,7 +327,7 @@ class Model extends Database
          
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
@@ -282,91 +337,96 @@ class Model extends Database
     * @param string $fields is a string of fields delimited by commas(,)
     * @return Model $response is an associative array: flag - a boolean to indicate if data was read; data - an associative array of the selected records OR the error message
     */
-   public function find(array $fields = ["*"], string $condition = "WHERE 1") : Model
+   public static function findJoin(string $fields = "*", string $condition = "WHERE 1") : Model
    {
+      self::instance();
       try {
 
-         $this->joins = [];
-         $arrFields = [];
-         foreach ($fields as $field) {
-            $arrFields[] = "{$this->table}.{$field}";
-         }
-         $this->joinFields = implode(", ", $arrFields);
-         $this->joinCondition = $condition;
+         self::$joins = [];
+         // foreach ($fields as $field) {
+         //    $arrFields[] = DB_PREFIX . "". self::$table .".{$field}";
+         // }
+         self::$joinFields = $fields;
+         self::$joinCondition = $condition;
 
-         return $this;
+         return new self();
 
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
-   public function innerJoin(string $table, string $on) : Model
+   public static function innerJoin(string $table, string $on) : Model
    {
+      self::instance();
       try {
 
-         $this->joins = "INNER JOIN {$table} ON {$on}";
+         self::$joins[] = "INNER JOIN {$table} ON {$on}";
 
-         return $this;
+         return new self();
          
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
-   public function leftJoin(string $table, string $on) : Model
+   public static function leftJoin(string $table, string $on) : Model
    {
+      self::instance();
       try {
 
-         $this->joins = "LEFT JOIN {$table} ON {$on}";
+         self::$joins[] = "LEFT JOIN {$table} ON {$on}";
 
-         return $this;
+         return new self();
          
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
-   public function rightJoin(string $table, string $on) : Model
+   public static function rightJoin(string $table, string $on) : Model
    {
+      self::instance();
       try {
 
-         $this->joins = "RIGHT JOIN {$table} ON {$on}";
+         self::$joins[] = "RIGHT JOIN {$table} ON {$on}";
 
-         return $this;
+         return new self();
          
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
-   public function fullJoin(string $table, string $on) : Model
+   public static function fullJoin(string $table, string $on) : Model
    {
+      self::instance();
       try {
 
-         $this->joins = "FULL OUTER JOIN {$table} ON {$on}";
+         self::$joins[] = "FULL OUTER JOIN {$table} ON {$on}";
 
-         return $this;
+         return new self();
          
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
-   public function join() : array
+   public static function join() : array
    {
+      self::instance();
       try {
 
-         $joins = implode(" ", $this->joins);
+         $joins = implode(" ", self::$joins);
 
-         $query = "SELECT {$this->joinFields} FROM {$this->table} {$joins} {$this->joinCondition}";
+         $query = "SELECT ". self::$joinFields ." FROM ". self::$table ." {$joins} ". self::$joinCondition ."";
 
-         $stmt = $this->conn->prepare($query);
+         $stmt = self::$conn->prepare($query);
          
          $stmt->execute();
    
@@ -378,7 +438,7 @@ class Model extends Database
          
       }
       catch(PDOException $ex) {
-         exit($ex->getMessage());
+         trigger_error($ex->getMessage());
       }
    }
 
@@ -386,17 +446,21 @@ class Model extends Database
     * A custom method for custom query, a raw query
     * 
     * @param string $query is the raw sql query
-    * @param bool $returnResult is a flag to tell if the user is expecting a response
-    * @return array $response is an associative array of returned records
+    * @param bool $returnResult is a flag to tell if the user is expecting a response array or a boolean
+    * @return array|bool $response is either an associative array of returned records or a boolean value
     */
-   public function query(string $query, bool $results = false) : array
+   public static function query(string $query, bool $results = false)
    {
+      self::instance();
       try {
 
-         $stmt = $this->conn->prepare($query);
-         
-         $stmt->execute();
+         $stmt = self::$conn->prepare($query);
+         $result = $stmt->execute();
 
+         if (!$result) {
+            throw new PDOException();
+         }
+         
          // if returned result is expected
          if ($results == true) {
             $stmt->setFetchMode(PDO::FETCH_ASSOC);
@@ -407,7 +471,7 @@ class Model extends Database
 
          } else {
             
-            $this->affected = $stmt->rowCount();
+            self::$affected = $stmt->rowCount();
 
             if ($stmt->rowCount() > 0) {
                return true;
@@ -418,33 +482,36 @@ class Model extends Database
          }
 
       }
-      catch(PDOException $ex) {
-         exit($ex->getMessage());
+      catch(\Throwable $ex) {
+         trigger_error($ex->getMessage());
       }
    }
 
    /**
     * Begins transaction
     */
-   public function transaction()
+   public static function transaction()
    {
-      $this->conn->beginTransaction();
+      self::instance();
+      self::$conn->beginTransaction();
    }
 
    /**
     * Commits Transactions
     */
-   public function commit()
+   public static function commit()
    {
-      $this->conn->commit();
+      self::instance();
+      self::$conn->commit();
    }
 
    /**
     * Rollback Transaction
     */
-   public function rollback()
+   public static function rollback()
    {
-      $this->conn->rollback();
+      self::instance();
+      self::$conn->rollback();
    }
 
    /**
@@ -453,18 +520,56 @@ class Model extends Database
     * @param string $value is the value to be sanitized
     * @return string $value is a sanitized value
     */
-   private function sanitize(string $value) : string
+   private static function sanitize(string $value) : string
    {
-      return htmlentities($value ?? "", ENT_QUOTES);
+      self::instance();
+      return $value;
+      // return htmlentities($value ?? "", ENT_QUOTES);
    }
 
    public function __destruct()
    {
-      $this->conn = null;
-      $this->table = null;
-      $this->affected = null;
+      self::instance();
+      self::$conn = null;
+      self::$table = null;
+      self::$affected = null;
    }
 
 }
 
-?>
+// function join
+
+// INNER
+// SELECT column_name(s)
+// FROM table1
+// INNER JOIN table2
+// ON table1.column_name = table2.column_name;
+
+// LEFT
+// SELECT column_name(s)
+// FROM table1
+// LEFT JOIN table2
+// ON table1.column_name = table2.column_name;
+
+// RIGHT
+// SELECT column_name(s)
+// FROM table1
+// RIGHT JOIN table2
+// ON table1.column_name = table2.column_name;
+
+// FULL
+// SELECT column_name(s)
+// FROM table1
+// FULL OUTER JOIN table2
+// ON table1.column_name = table2.column_name
+// WHERE condition;
+
+// SELF
+// SELECT column_name(s)
+// FROM table1 T1, table1 T2
+// WHERE condition;
+
+// UNION
+// SELECT column_name(s) FROM table1
+// UNION
+// SELECT column_name(s) FROM table2;

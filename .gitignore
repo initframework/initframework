@@ -1,4 +1,5 @@
-# vendor file
+# Composer files
+composer.lock
 /vendor/
 
 # storage files

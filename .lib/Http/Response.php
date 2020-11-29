@@ -1,6 +1,7 @@
 <?php
 
-function __validateCode($code) {
+function __validateCode($code)
+{
    // Content from http://en.wikipedia.org/wiki/List_of_HTTP_status_codes
    if (!in_array($code, [
       // Information response codes
@@ -96,15 +97,41 @@ function __validateCode($code) {
    else return;
 }
 
+function __responseCache($contentType, $data, $code)
+{
+   // // Set cached data if any exist for this route
+   // if (CACHE_REQUEST) {
+   //    // Note: getallheaders() only work for Apache seervers
+   //    $headers = getallheaders();
+      
+   //    // Check if the client is requesting a fresh response
+   //    if (!array_key_exists('Cache-Control', $headers) || !in_array($headers['Cache-Control'], ['no-cache', 'no-store', 'must-revalidate'])){
+   //       $req = $_ENV['REQUEST'];
+   //       // cache indication
+   //       if (!empty(strstr($contentType, 'application/json'))){
+   //          // using json
+   //          $data['caching'] = true;
+   //       } elseif (!empty(strstr($contentType, 'text/html'))){
+   //          // using html
+   //          $data = "<!-- Using cached data -->\r\n" . $data;
+   //       }
+   //       $cache = ['code' => $code, 'data' => $data, 'contentType' => $contentType];
+   //       \Library\Http\Cache::set($req->requestUri, $cache);
+   //    }
+   // }
+}
+
 function success($message = "success", array $data = null, int $code = 200)
 {
    __validateCode($code);
    header("Content-Type: application/json; charset=UTF-8", true, $code);
-   exit(json_encode([
+   $data = [
       "status" => true,
       "message" => $message,
       "data" => $data
-   ]));
+   ];
+   // __responseCache("application/json; charset=UTF-8", $data, $code);
+   exit(json_encode($data));
 }
 
 function error($message = "error", array $data = null, int $code = 400)
@@ -134,7 +161,7 @@ function notFoundError($req)
 
 function serverError($req)
 {
-   if (substr_compare($req->httpAccept, "text/html", 0) == true) {
+   if (substr_compare($req->httpAccept, "text/html", 0) == true ) {
       render('framework/error.html', [
          "code" => 500,
          "message" => "Server Error"
@@ -156,7 +183,9 @@ function html(string $filename, int $code = 200)
 
    // if file exists
    if (file_exists($file)) {
-      exit(\file_get_contents($file));
+      $data = \file_get_contents($file);
+      // __responseCache("text/html; charset=UTF-8", $data, $code);
+      exit($data);
    } else {
       trigger_error("'$filename' does not exist in the template directory!");
    }
@@ -172,18 +201,12 @@ function xml(string $filename, int $code = 200)
 
    // if file exists
    if (file_exists($file)) {
-      $view = \file_get_contents($file);
+      $data = \file_get_contents($file);
+      // __responseCache("application/xml; charset=UTF-8", $data, $code);
+      exit($data);
    } else {
       trigger_error("'$filename' does not exist in the template directory!");
    }
-}
-
-function asset(string $path) {
-   return ASSETS_PATH . ltrim($path, '/');
-}
-
-function storage(string $path) {
-   return STORAGE_PATH . ltrim($path, '/');
 }
 
 function render(string $filename, array $data = null, int $code = 200)
@@ -198,142 +221,99 @@ function render(string $filename, array $data = null, int $code = 200)
 
    // render data
    if ($data != null) {
-
-      // exit(json_encode($data));
-
-      if (TEMPLATE_ENGINE == "init") {
-         $viewData = "<?php ";
-         foreach ($data as $key => $value) {
-            $viewData .= "$$key = '$value';";
-         }
-         $viewData .= " ?>";
-      } elseif (TEMPLATE_ENGINE == "mirror.js") {
-         $viewData = "@vars";
-         foreach ($data as $key => $value) {
-            $viewData .= "$$key = '$value';";
-         }
-         $viewData .= "@@vars";
+      $viewData = "<?php ";
+      foreach ($data as $key => $value) {
+         $viewData .= "$$key = '$value';";
       }
+      $viewData .= " ?>";
    }
-
-   // preload user instance
-   // if (TEMPLATE_ENGINE == "init") {
-      // $viewData .= "<? php \$user = json_decode('" . \App\Services\User::user() . "'); ? >";
-   // } elseif (TEMPLATE_ENGINE == "mirror.js") {
-      // $viewData .= "@var \$user = " . \App\Services\User::user() . ";";
-   // }
    
    if (file_exists($file)) {
       // Convert PHP Snippets
       $view = \file_get_contents($file);
+      $view = implode(" \r", explode("\r", $view));
       // replace init snippets
       // @import
       $view = import($view);
       // @csrftoken
-      // $view = preg_replace("/@csrftoken/", "<input type=\"hidden\" name=\"CSRFToken\" value=\"" . \App\Services\Auth::csrfToken() . "\"/>", $view);
+      $view = preg_replace("/@_csrftoken/", "<input type=\"hidden\" name=\"CSRFToken\" value=\"" . \Services\Cipher::encryptAES(APP_KEY, APP_NAME) . "\"/>", $view);
+      $view = preg_replace("/@csrftoken/", \Services\Cipher::encryptAES(APP_KEY, APP_NAME), $view);
       // request methods
-      $view = preg_replace("/@methodPut/", "<input type=\"hidden\" name=\"HTTP_REQUEST_METHOD\" value=\"PUT\">", $view);
-      $view = preg_replace("/@methodPatch/", "<input type=\"hidden\" name=\"HTTP_REQUEST_METHOD\" value=\"PATCH\">", $view);
-      $view = preg_replace("/@methodDelete/", "<input type=\"hidden\" name=\"HTTP_REQUEST_METHOD\" value=\"DELETE\">", $view);
+      $view = preg_replace("/@_method_put/", "<input type=\"hidden\" name=\"HTTP_REQUEST_METHOD\" value=\"PUT\">", $view);
+      $view = preg_replace("/@_method_patch/", "<input type=\"hidden\" name=\"HTTP_REQUEST_METHOD\" value=\"PATCH\">", $view);
+      $view = preg_replace("/@_method_delete/", "<input type=\"hidden\" name=\"HTTP_REQUEST_METHOD\" value=\"DELETE\">", $view);
       // view parameters
       $view = preg_replace("/@vars/", $viewData, $view);
-      
-      if (TEMPLATE_ENGINE == "init")
-      {
-         // directives
-         // if-auth
-         // $re = '/@if-auth */m';
-         // preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         // foreach ($matches as $match ) {
-         //    $rMatch = $match[0];
-         //    $view = \preg_replace("/$rMatch/", "< ?php if (\App\Services\User::\$auth == true) { ? >", $view);
-         // }
-         // // if-not-auth
-         // $re = '/@if-not-auth */m';
-         // preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         // foreach ($matches as $match ) {
-         //    $rMatch = $match[0];
-         //    $view = \preg_replace("/$rMatch/", "< ?php if (\App\Services\User::\$auth != true) { ? >", $view);
-         // }
 
-         // opening tags
-         $re = '/@(if|for|foreach|while) *[(]((?!@+).)+[)] */m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         foreach ($matches as $match ) {
-            $rMatch = $match[0];
-            $rMatch = str_replace("$","\\$", $rMatch);
-            $rMatch = str_replace("(","\\(", $rMatch);
-            $rMatch = str_replace(")","\\)", $rMatch);
-            $rMatch = str_replace("[","\\[", $rMatch);
-            $rMatch = str_replace("]","\\]", $rMatch);
-            $view = \preg_replace("/$rMatch/", str_replace("@", "<?php ", $match[0] . " { ?>"), $view);
-         }
-         // middle tags
-         $re = '/@elseif *[(]((?!@+).)+[)] */m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         foreach ($matches as $match ) {
-            $rMatch = $match[0];
-            $rMatch = str_replace("$","\\$", $rMatch);
-            $rMatch = str_replace("(","\\(", $rMatch);
-            $rMatch = str_replace(")","\\)", $rMatch);
-            $rMatch = str_replace("[","\\[", $rMatch);
-            $rMatch = str_replace("]","\\]", $rMatch);
-            $view = \preg_replace("/$rMatch/", str_replace("@", "<?php } ", $match[0] . " { ?>"), $view);
-         }
-         $re = '/@else */m';
-         $view = \preg_replace($re, "<?php } else { ?>", $view);
-         // closing tags
-         $re = '/@(endif|endforeach|endfor|endwhile) */m';
-         $view = \preg_replace($re, "<?php } ?>", $view);
-         // php
-         // $re = '/@php((?!@+).)+;+/m';
-         $re = '/@php((?!@+).)+;/m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         foreach ($matches as $match ) {
-            $rMatch = $match[0];
-            $rMatch = preg_quote($rMatch, "/");
+      // directives
 
-            $view = \preg_replace("/$rMatch/", str_replace("@php", "<?php ", $match[0] . " ?>"), $view);
-         }
-         // expressions
-         // $re = '/[{]{2} *((?![{]{2})(?! +)(?![}]{2}).)+ *[}]{2}/m';
-         $re = '/[{]{2} *((?![{]{2})(?![}]{2}).)+ *[}]{2}/m';
-         preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
-         // exit(json_encode($matches));
-         foreach ($matches as $match ) {
-            if (trim($match[0], '{} ') != "" ) {
-               $rMatch = trim($match[0]);
-               $rMatch = preg_quote($rMatch, "/");
-
-               $view = \preg_replace("/$rMatch/", str_replace("{{", "<?=", str_replace("}}", "?>", $match[0])), $view);
-            }
-         }
-         
-         try {
-            ob_start();
-            eval("?>" . $view . "<?php");
-            $renderedView = ob_get_contents();
-            ob_end_clean();
-         } catch (ParseError $e) {
-            echo "&raquo; Error parsing view <b><i>$filename</i></b> on line <b><i>" . $e->getLine() . "</i></b><br>";
-            echo "<textarea style='width: 100%; height: 25em;' disabled>";
-            $count = 1; $lines = explode("\r\n", $view);
-            foreach($lines as $line) {
-               echo $count == $e->getLine() 
-                  ? str_pad("🚩  ", strlen(count($lines)), "0", STR_PAD_LEFT) 
-                  : str_pad($count, strlen(count($lines)), "0", STR_PAD_LEFT) . ") ";
-               echo $line . "\r\n";
-               $count++;
-            }
-            echo "</textarea><br><br>" . PHP_EOL;
-            trigger_error($e->getMessage());
-         }
-         
-         exit($renderedView . PHP_EOL);
-
-      } elseif (TEMPLATE_ENGINE == "mirror.js") {
-         exit($view . PHP_EOL);
+      // opening tags
+      $re = '/@(if|for|foreach|while) *[(]((?!@+).)+[)] */m';
+      preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+      foreach ($matches as $match ) {
+         $rMatch = $match[0];
+         $rMatch = preg_quote($rMatch, '/');
+         $view = \preg_replace("/$rMatch/", str_replace("@", "<?php ", $match[0] . " { ?>"), $view);
       }
+      // middle tags
+      $re = '/@elseif *[(]((?!@+).)+[)] */m';
+      preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+      foreach ($matches as $match ) {
+         $rMatch = $match[0];
+         $rMatch = preg_quote($rMatch, '/');
+         $view = \preg_replace("/$rMatch/", str_replace("@", "<?php } ", $match[0] . " { ?>"), $view);
+      }
+      $re = '/@else */m';
+      $view = \preg_replace($re, "<?php } else { ?>", $view);
+      // closing tags
+      $re = '/@(endif|endforeach|endfor|endwhile) */m';
+      $view = \preg_replace($re, "<?php } ?>", $view);
+      // php
+      $re = '/@php((?!@+).)+;/m';
+      preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+      foreach ($matches as $match ) {
+         $rMatch = $match[0];
+         $rMatch = preg_quote($rMatch, "/");
+         $view = \preg_replace("/$rMatch/", str_replace("@php", "<?php ", $match[0] . " ?>"), $view);
+      }
+      // expressions
+      $re = '/[{]{2} *((?![{]{2})(?![}]{2}).)+ *[}]{2}/m';
+      preg_match_all($re, $view, $matches, PREG_SET_ORDER, 0);
+      // exit(json_encode($matches));
+      foreach ($matches as $match ) {
+         if (trim($match[0], '{} ') != "" ) {
+            $rMatch = trim($match[0], ' ');
+            $rMatch = preg_quote($rMatch, "/");
+            $view = \preg_replace("/$rMatch/", str_replace("{{", "<?=", str_replace("}}", "?>", $match[0])), $view);
+         }
+      }
+      
+      try {
+         ob_start();
+         include_once(TEMPLATE_DIR . '.view.php');
+         eval("?>" . $view . "<?php");
+         $renderedView = ob_get_contents();
+         ob_end_clean();
+         
+         $data = $renderedView . PHP_EOL;
+         // __responseCache("text/html; charset=UTF-8", $data, $code);
+         exit($data);
+
+      } catch (Throwable $e) {
+         echo "&raquo; Error parsing view <b><i>$filename</i></b> on line <b><i>" . $e->getLine() . "</i></b><br>";
+         echo "<textarea style='width: 100%; height: 25em;' disabled>";
+         $count = 1; $lines = explode("\r\n", $view); // \file_get_contents($file)
+         foreach($lines as $line) {
+            echo $count == $e->getLine() 
+               ? str_pad("🔴  ", strlen(count($lines)), "0", STR_PAD_LEFT) 
+               : str_pad($count, strlen(count($lines)), "0", STR_PAD_LEFT) . ") ";
+            echo $line . "\r\n";
+            $count++;
+         }
+         echo "</textarea><br><br>" . PHP_EOL;
+         trigger_error($e->getMessage());
+      }
+      
    } else {
       trigger_error("'$filename' does not exist in the template directory!");
    }
@@ -368,50 +348,14 @@ function import(string $view)
    }
 }
 
+function route(string $name)
+{
+   return \Library\Http\Router::getRoute($name);
+}
+
 // redirection
 function redirect(string $location)
 {
    header("Location: $location");
    http_response_code(302);
 }
-
-// authentication headers
-// function auth_basic($realm)
-// {
-//    // set the response header
-//    remove_all_headers();
-//    add_header('WWW-Authenticate', sprintf('Basic realm="%s"', $realm));
-//    send('Access Denied', 401);
-// }
-
-   // function auth_digest($realm)
-   // {
-   //    // generate authentication parameters
-   //    // nonce, to make each request unique
-   //    $nonce = md5(uniqid("", true));
-   //    // opaque, must be returned by the client unaltered
-   //    $opaque = md5(uniqid());
-   //    // qop, the quality of protection of the request
-   //    $qop = "auth";
-   //    // set the response header
-   //    remove_all_headers();
-   //    add_header('WWW-Authenticate', sprintf('Digest realm="%s", qop="%s", nonce="%s", opaque="%s"', $realm, $qop, $nonce, $opaque));
-   //    send('Access Denied', 401);
-   // }
-
-   // function auth_oauth()
-   // {
-
-   // }
-
-   // function auth_oauth2()
-   // {
-
-   // }
-
-   // function auth_jwt()
-   // {
-
-   // }
-
-// }

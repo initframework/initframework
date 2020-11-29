@@ -1,41 +1,106 @@
 <?php
 namespace Library\Http;
 use Library\Http\Request;
-// use Library\Http\Response;
-
+use function call_user_method;
 class Router
 {
    private static $request;
-   private static $get, $post, $patch, $put, $delete;
+   private static $get, $post, $patch, $put, $delete, $allRoutes;
+   private static $instance, $latestRoute;
 
-   public static function init(Request $request)
+   public static function start(Request $request)
    {
       self::$request = $request;
+      self::$instance = new self();
+      self::$get = []; self::$post = []; self::$patch = [];
+      self::$put = []; self::$delete = []; self::$allRoutes = [];
    }
 
    public static function get(string $route, ...$handlers)
    {
-      self::$get[self::formatRoute($route)] = $handlers;
+      self::$get[] = [
+         'route' => self::formatRoute($route),
+         'handlers' => $handlers,
+         'name' => null
+      ];
+      self::$latestRoute = 'get';
+      return self::$instance;
    }
 
    public static function post(string $route, ...$handlers)
    {
-      self::$post[self::formatRoute($route)] = $handlers;
+      self::$post[] = [
+         'route' => self::formatRoute($route),
+         'handlers' => $handlers,
+         'name' => null
+      ];
+      self::$latestRoute = 'post';
+      return self::$instance;
    }
 
    public static function patch(string $route, ...$handlers)
    {
-      self::$patch[self::formatRoute($route)] = $handlers;
+      self::$patch[] = [
+         'route' => self::formatRoute($route),
+         'handlers' => $handlers,
+         'name' => null
+      ];
+      self::$latestRoute = 'patch';
+      return self::$instance;
    }
 
    public static function put(string $route, ...$handlers)
    {
-      self::$put[self::formatRoute($route)] = $handlers;
+      self::$put[] = [
+         'route' => self::formatRoute($route),
+         'handlers' => $handlers,
+         'name' => null
+      ];
+      self::$latestRoute = 'put';
+      return self::$instance;
    }
 
    public static function delete(string $route, ...$handlers)
    {
-      self::$delete[self::formatRoute($route)] = $handlers;
+      self::$delete[] = [
+         'route' => self::formatRoute($route),
+         'handlers' => $handlers,
+         'name' => null
+      ];
+      self::$latestRoute = 'delete';
+      return self::$instance;
+   }
+
+   public static function command(string $command, $handler)
+   {
+      if ($command == self::$request->command) {
+         if (is_callable($handler)) {
+            \call_user_func_array($handler, [self::$request->commandParams]);
+         }
+      }
+   }
+
+   public static function name(string $name)
+   {
+      switch (self::$latestRoute) {
+         case 'get':
+            self::$get[count(self::$get) - 1]['name'] = $name;
+            break;
+         case 'post':
+            self::$post[count(self::$post) - 1]['name'] = $name;
+            break;
+         case 'put':
+            self::$put[count(self::$put) - 1]['name'] = $name;
+            break;
+         case 'patch':
+            self::$patch[count(self::$patch) - 1]['name'] = $name;
+            break;
+         case 'delete':
+            self::$delete[count(self::$delete) - 1]['name'] = $name;
+            break;         
+         default:
+            break;
+      }
    }
 
    /**
@@ -55,27 +120,43 @@ class Router
    /**
     * Resolves a route
     */
-   public static function resolve()
+   private static function resolve()
    {
+      self::$allRoutes = array_merge(self::$get ?? [], self::$post ?? [], self::$delete ?? [], self::$patch ?? [], self::$put ?? []);
       $methodDictionary = self::${strtolower(self::$request->requestMethod)};
       $formatedRoute = self::formatRoute(self::$request->requestUri);
 
-      foreach ($methodDictionary as $route => $methods) {
+      foreach ($methodDictionary as $url) {
+         $route = $url['route'];
+         $handlers = $url['handlers'];
          list($status, $params) = self::compare($route, $formatedRoute);
          
          if ($status == false) {
             continue;
          } else {
             self::$request->routeParams = $params;
-            foreach ($methods as $method) {
-               call_user_func_array($method, [self::$request]);
+            foreach ($handlers as $handler) {
+               if (is_callable($handler)) {
+                  \call_user_func_array($handler, [self::$request]);
+                  break;
+               }
             }
             exit;
          }
       }
 
       notFoundError(self::$request);
-      return;
+   }
+
+   public static function getRoute(string $name)
+   {
+      foreach (self::$allRoutes as $route) {
+         if ($route['name'] == $name) {
+            return ltrim($route['route'], "/");
+            break;
+         }
+      }
+      return ltrim($name, "/");
    }
 
    
@@ -199,8 +280,59 @@ class Router
       return [$match, $route_parameters];
    }
 
+   /**
+    * This method returns the route url to the view
+    *
+    * @param string $name
+    * @param array $urlParams
+    * @return string $routeUrl
+    */
+   /*
+      public static function getUri(string $name, array $urlParams = null)
+      {
+         if ( isset($name) ) {
+            $domain = \Config["DOMAIN"];
+            // url to be returned
+            $routeUrl = "";
+
+            foreach (self::$allRoutes as $route ) {
+               if ( $route['name'] == $name ) {
+
+                  // get the url
+                  $uri = $route['uri'];
+
+                  // if urlParams is set, then
+                  if (isset($urlParams)) {
+                     // break the url
+                     $break = explode("/", $uri);
+                     // assign the matched url parameter placeholder to an array
+                     $got = preg_grep("/{[0-9a-zA-Z_+-@#]+}/", $break);
+
+                     foreach ($got as $key => $value) {
+                        // strip the curly braces and get the urlParam array position
+                        $value = str_replace("{", "", str_replace("}", "", $value));
+                        // replace any forward slash with an underscore (_) character
+                        $urlParams[$value] = str_replace("/","_",$urlParams[$value]);
+                        // assign the value of the urlparam to the broken url
+                        $break[$key] = $urlParams[$value];
+                     }
+
+                     // implode the url together
+                     $uri = implode("/", $break);
+                  }
+                  
+                  $routeUrl = $domain . $uri;
+                  return $routeUrl;
+               }
+            }
+         }
+      }
+   */
+
    public function __destruct()
    {
-      self::resolve();
+      if (PHP_SAPI != 'cli') {
+         self::resolve();
+      }
    }
 }

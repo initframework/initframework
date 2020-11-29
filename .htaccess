@@ -14,4 +14,12 @@
    RewriteCond %{REQUEST_FILENAME} !-d
    RewriteCond %{REQUEST_FILENAME} !-f
    RewriteRule ^ index.php [L]
+
+   # Deny access to these files
+   # Note: Files added here are files that are not redirected to the index.php
+   <FilesMatch "(.htaccess|.gitignore|php.ini|composer.json|composer.lock)$">
+      order allow,deny
+      Deny from all
+   </FilesMatch>
+
 </IfModule>
