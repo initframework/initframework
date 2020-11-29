@@ -1,4 +1,11 @@
-# php packages
+# vendor file
 /vendor/
 
+# storage files
+storage/
 
+# Todo file
+.todo
+
+# Vscode
+.vscode/
