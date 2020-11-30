@@ -1,6 +1,5 @@
 # Init Application
 
-This project was bootstrapped with [Init Framework](https://github.com/initframework/initframework).<br />
 👌🏽 A Simple Web Framework for PHP Developers.
 
 

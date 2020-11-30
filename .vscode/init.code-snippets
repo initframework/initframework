@@ -1,0 +1,552 @@
+{
+    "Router": {
+        "scope": "php",
+        "prefix": ["Router","Router::"],
+        "body": "Router::${1|get,post,put,patch,delete,command|}('\/${2:route}', function(Request \\$req) {\r\t${3|Controller::Method($req);,Middleware::Method($req);\rController::Method($req);|}\r})${4:->name('${5:name}')};\r"
+    },
+    "Schema Create": {
+        "scope": "php",
+        "prefix": "Schema::create",
+        "body": "Schema::alter('${1:table}', function(Schema \\$schema) {\r\t\\$schema->int('id')->auto_increment()->primary();\r\t\\$schema->timestamp('created_at')->attribute();\r\t\\$schema->timestamp('updated_at')->attribute(\"ON UPDATE CURRENT_TIMESTAMP\");\r}, false, '${1:table}');\r"
+    },
+    "Schema Alter": {
+        "scope": "php",
+        "prefix": "Schema::alter",
+        "body": "Schema::alter('${1:table}', function(Schema \\$schema) {\r\t\\$schema->change('id')->double('id');\r\t\\$schema->change('created_at')->datetime('created_at');\r\t\\$schema->change('updated_at')->datetime('updated_at');\r}, false);\r"
+    },
+    "Schema Seed": {
+        "scope": "php",
+        "prefix": "Schema::seed",
+        "body": "Schema::seed('${1:table}', \r\t[\r\t\t'field' => 'value',\r\t\t'field' => 'value'\r\t],\r\t[\r\t\t'field' => 'value',\r\t\t'field' => 'value'\r\t]\r\t// ...\r);\r"
+    },
+    "Schema Drop": {
+        "scope": "php",
+        "prefix": "Schema::drop",
+        "body": "Schema::drop('${1:table}');\r"
+    },
+    "Schema Attribute": {
+        "scope": "php",
+        "prefix": "attribute",
+        "body": "attribute('${1|BINARY,UNSIGNED,UNSIGNED ZEROFILL,ON UPDATE CURRENT_TIMESTAMP|}')$0"
+    },
+    "Schema Auto Increment": {
+        "scope": "php",
+        "prefix": "auto_increment",
+        "body": "auto_increment()$0"
+    },
+    "Schema Big Int": {
+        "scope": "php",
+        "prefix": "big_int",
+        "body": "big_int('${1:field}', ${2:size})$0"
+    },
+    "Schema Binary": {
+        "scope": "php",
+        "prefix": "binary",
+        "body": "binary('${1:field}', ${2:size})$0"
+    },
+    "Schema Bit": {
+        "scope": "php",
+        "prefix": "bit",
+        "body": "bit('${1:field}', ${2:size})$0"
+    },
+    "Schema Blob": {
+        "scope": "php",
+        "prefix": "blob",
+        "body": "blob('${1:field}')$0"
+    },
+    "Schema Boolean": {
+        "scope": "php",
+        "prefix": "boolean",
+        "body": "boolean('${1:field}')$0"
+    },
+    "Schema Change": {
+        "scope": "php",
+        "prefix": "change",
+        "body": "change('${1:field}')$0"
+    },
+    "Schema Char": {
+        "scope": "php",
+        "prefix": "char",
+        "body": "char('${1:field}', ${2:size})$0"
+    },
+    "Schema Comment": {
+        "scope": "php",
+        "prefix": "comment",
+        "body": "comment('${1:field}')$0"
+    },
+    "Schema Date": {
+        "scope": "php",
+        "prefix": "date",
+        "body": "date('${1:field}')$0"
+    },
+    "Schema Datetime": {
+        "scope": "php",
+        "prefix": "datetime",
+        "body": "datetime('${1:field}')$0"
+    },
+    "Schema Decimal": {
+        "scope": "php",
+        "prefix": "decimal",
+        "body": "decimal('${1:field}', ${2:size})$0"
+    },
+    "Schema Default": {
+        "scope": "php",
+        "prefix": "default",
+        "body": "default('${1|NONE,NULL,CURRENT_TIMESTAMP,AS_DEFINED|}')$0"
+    },
+    "Schema Double": {
+        "scope": "php",
+        "prefix": "double",
+        "body": "double('${1:field}', '${2:size},${3:decimalpoint}')$0"
+    },
+    "Schema Enum": {
+        "scope": "php",
+        "prefix": "enum",
+        "body": "enum('${1:field}', [$2])$0"
+    },
+    "Schema Float": {
+        "scope": "php",
+        "prefix": "float",
+        "body": "float('${1:field}', '${2:size},${3:decimalpoint}')$0"
+    },
+    "Schema Foreign": {
+        "scope": "php",
+        "prefix": "foreign",
+        "body": "foreign('${1:localfield}', '${2:foreigntable}', '${3:foreignfield}', 'ON DELETE ${4|NO ACTION,RESTRICT,CASCADE,SET NULL|}', 'ON UPDATE ${5|NO ACTION,RESTRICT,CASCADE,SET NULL|}');"
+    },
+    "Schema Index": {
+        "scope": "php",
+        "prefix": "index",
+        "body": "index()$0"
+    },
+    "Schema Int": {
+        "scope": "php",
+        "prefix": "int",
+        "body": "int('${1:field}', ${2:size})$0"
+    },
+    "Schema Json": {
+        "scope": "php",
+        "prefix": "json",
+        "body": "json('${1:field}')$0"
+    },
+    "Schema Long Blob": {
+        "scope": "php",
+        "prefix": "long_blob",
+        "body": "long_blob('${1:field}')$0"
+    },
+    "Schema Long Text": {
+        "scope": "php",
+        "prefix": "long_text",
+        "body": "long_text('${1:field}')$0"
+    },
+    "Schema Medium Blob": {
+        "scope": "php",
+        "prefix": "medium_blob",
+        "body": "medium_blob('${1:field}')$0"
+    },
+    "Schema Medium Int": {
+        "scope": "php",
+        "prefix": "medium_int",
+        "body": "medium_int('${1:field}', ${2:size})$0"
+    },
+    "Schema Medium Text": {
+        "scope": "php",
+        "prefix": "medium_text",
+        "body": "medium_text('${1:field}')$0"
+    },
+    "Schema Not Nullable": {
+        "scope": "php",
+        "prefix": "not_nullable",
+        "body": "not_nullable()$0"
+    },
+    "Schema Nullable": {
+        "scope": "php",
+        "prefix": "nullable",
+        "body": "nullable()$0"
+    },
+    "Schema Primary": {
+        "scope": "php",
+        "prefix": "primary",
+        "body": "primary()$0"
+    },
+    "Schema Real": {
+        "scope": "php",
+        "prefix": "real",
+        "body": "real('${1:field}', '${2:size},${3:decimalpoint}')$0"
+    },
+    "Schema Serial": {
+        "scope": "php",
+        "prefix": "serial",
+        "body": "serial('${1:field}')$0"
+    },
+    "Schema Set": {
+        "scope": "php",
+        "prefix": "set",
+        "body": "set('${1:field}', [$2])$0"
+    },
+    "Schema Small Int": {
+        "scope": "php",
+        "prefix": "small_int",
+        "body": "small_int('${1:field}', ${2:size})$0"
+    },
+    "Schema Time": {
+        "scope": "php",
+        "prefix": "time",
+        "body": "time('${1:field}')$0"
+    },
+    "Schema Timestamp": {
+        "scope": "php",
+        "prefix": "timestamp",
+        "body": "timestamp('${1:field}')$0"
+    },
+    "Schema Tiny Blob": {
+        "scope": "php",
+        "prefix": "tiny_blob",
+        "body": "tiny_blob('${1:field}')$0"
+    },
+    "Schema Tiny Int": {
+        "scope": "php",
+        "prefix": "tiny_int",
+        "body": "tiny_int('${1:field}', ${2:size})$0"
+    },
+    "Schema Tiny Text": {
+        "scope": "php",
+        "prefix": "tiny_text",
+        "body": "tiny_text('${1:field}')$0"
+    },
+    "Schema Unique": {
+        "scope": "php",
+        "prefix": "unique",
+        "body": "unique('${1:field}')$0"
+    },
+    "Schema Varbinary": {
+        "scope": "php",
+        "prefix": "varbinary",
+        "body": "varbinary('${1:field}', ${2:size})$0"
+    },
+    "Schema Varchar": {
+        "scope": "php",
+        "prefix": "varchar",
+        "body": "varchar('${1:field}', ${2:size})$0"
+    },
+    "Schema Year": {
+        "scope": "php",
+        "prefix": "year",
+        "body": "year('${1:field}')$0"
+    },
+    "View Import": {
+        "scope": "html",
+        "prefix": "@import",
+        "body": "@import ${1:view}.html\r"
+    },
+    "View PHP Mode": {
+        "scope": "html",
+        "prefix": "@php",
+        "body": "@php $0;\r"
+    },
+    "View Echo Variable": {
+        "scope": "html",
+        "prefix": "{{",
+        "body": "{{ $0 }}"
+    },
+    "View Form CSRF": {
+        "scope": "html",
+        "prefix": ["@_csrftoken","@csrf"],
+        "body": "@_csrftoken\r"
+    },
+    "View Javascript CSRF": {
+        "scope": "html",
+        "prefix": ["@csrftoken","@csrf"],
+        "body": "@csrftoken\r"
+    },
+    "View Form HTTP Method": {
+        "scope": "html",
+        "prefix": "@method",
+        "body": "@_method_${1|put,patch,delete|}\r"
+    },
+    "View If Condition": {
+        "scope": "html",
+        "prefix": "@if",
+        "body": "@if (${1:condition})\r$0\t\r${2|@endif,@else\r@endif,@elseif (condition)\r@else\r@endif|}"
+    },
+    "View For Iteration": {
+        "scope": "html",
+        "prefix": "@for",
+        "body": "@for (\\$${1:i} = ${2:0}; \\$${1:i} < \\$${3:length}; \\$${1:i}++)\r\t$0\r@endfor"
+    },
+    "View Foreach Iteration": {
+        "scope": "html",
+        "prefix": "@foreach",
+        "body": "@foreach (\\$${1:array} as \\$${2:element})\r\t$0\r@endforeach"
+    },
+    "View While Iteration": {
+        "scope": "html",
+        "prefix": "@while",
+        "body": "@while (${1:condition})\r\t$0\r@endwhile"
+    },
+    "response Render": {
+        "scope": "php",
+        "prefix": "render",
+        "body": "render('${1:filename}', [\r\t'${2:variable}' => '${3:value}',\r], ${4|200,400,500|});\r"
+    },
+    "Response Route": {
+        "scope": "php",
+        "prefix": "route",
+        "body": "route('${1:filename}');"
+    },
+    "Response Success": {
+        "scope": "php",
+        "prefix": "success",
+        "body": "success('${1:success}', [\r\t'${2:variable}' => '${3:value}',\r], ${4:200});\r"
+    },
+    "Response Error": {
+        "scope": "php",
+        "prefix": "error",
+        "body": "error('${1:error}', [\r\t'${2:variable}' => '${3:value}',\r], ${4:400});\r"
+    },
+    "Response Redirect": {
+        "scope": "php",
+        "prefix": "error",
+        "body": "redirect('${1:name}');"
+    },
+    "Response Html": {
+        "scope": "php",
+        "prefix": "html",
+        "body": "html('${1:filename}', ${2|200,400,500|});"
+    },
+    "Response Xml": {
+        "scope": "php",
+        "prefix": "xml",
+        "body": "xml('${1:filename}', ${2|200,400,500|});"
+    },
+    "Response Asset": {
+        "scope": "html",
+        "prefix": "asset",
+        "body": "asset('${1|js,css,imgs|}/filename')"
+    },
+    "Response Storage": {
+        "scope": "html",
+        "prefix": "storage",
+        "body": "storage('filename')"
+    },
+    "Upload Tmp": {
+        "scope": "php",
+        "prefix": "Upload::tmp",
+        "body": "Upload::tmp('${1:filename}', '${2:destination}', Upload::\\$${3|imagefiles,videofiles,audiofiles,zipfiles,documentfiles,fontfiles,textfiles|}, ${4:minsize}, ${5:maxsize})$0"
+    },
+    "Upload Maxsize": {
+        "scope": "php",
+        "prefix": "maxsize",
+        "body": "maxsize(${1:filesize}, ${2:size})$0"
+    },
+    "JWT encode": {
+        "scope": "php",
+        "prefix": "JWT::encode",
+        "body": "JWT::encode(${1:payload}, ${2:key}, ${3|HS256,HS384,HS512,RS256|}, ${4:keyId}, ${4:head})$0"
+    },
+    "Upload Minsize": {
+        "scope": "php",
+        "prefix": "JWT::decode",
+        "body": "JWT::decode(${1:token}, ${2:key}, [${3|HS256,HS384,HS512,RS256|}])$0"
+    },
+    "Upload Sign": {
+        "scope": "php",
+        "prefix": "JWT::sign",
+        "body": "JWT::sign(${1:msg}, ${2:key}, [${3|HS256,HS384,HS512,RS256|}])$0"
+    },
+    "Mail asHTML": {
+        "scope": "php",
+        "prefix": "asHTML",
+        "body": "asHTML(${1:message})$0"
+    },
+    "Mail asText": {
+        "scope": "php",
+        "prefix": "asText",
+        "body": "asText(${1:message}, ${2:wordwrap})$0"
+    },
+    "Mail withAttachment": {
+        "scope": "php",
+        "prefix": "withAttachment",
+        "body": "withAttachment('${1:path}', '${2:name}', '${3:encoding}', '${4:type}', '${5:disposition}')$0"
+    },
+    "Mail Send": {
+        "scope": "php",
+        "prefix": "send",
+        "body": "send('${1:from}', '${2:to}', '${3:subject}', '${4:reply}');"
+    },
+    "Mail Send Multiple": {
+        "scope": "php",
+        "prefix": "sendMultiple",
+        "body": "sendMultiple('${1:from}', '${2:to}', '${3:subject}', '${4:reply}');"
+    },
+    "Cipher Hash": {
+        "scope": "php",
+        "prefix": "Cipher::hash",
+        "body": "Cipher::hash('${1:length}');"
+    },
+    "Cipher Token": {
+        "scope": "php",
+        "prefix": "Cipher::token",
+        "body": "Cipher::token('${1:length}');"
+    },
+    "Cipher Encrypt Digest": {
+        "scope": "php",
+        "prefix": "Cipher::encryptDigest",
+        "body": "Cipher::encryptDigest('${1:username}', '${2:password}');"
+    },
+    "Cipher Decrypt Digest": {
+        "scope": "php",
+        "prefix": "Cipher::decryptDigest",
+        "body": "Cipher::decryptDigest('${1:authDigest}');"
+    },
+    "Cipher Sign JWT": {
+        "scope": "php",
+        "prefix": "Cipher::signJWT",
+        "body": "Cipher::signJWT([${1}]);"
+    },
+    "Cipher Hash Password": {
+        "scope": "php",
+        "prefix": "Cipher::hashPassword",
+        "body": "Cipher::hashPassword('${1:length}');"
+    },
+    "Cipher Verify PAssword": {
+        "scope": "php",
+        "prefix": "Cipher::verifyPassword",
+        "body": "Cipher::verifyPassword('${1:password}', '${1:hash}');"
+    },
+    "Cipher Encrypt AES": {
+        "scope": "php",
+        "prefix": "Cipher::encryptAES",
+        "body": "Cipher::encryptAESJson(${1:key}, ${2:data});"
+    },
+    "Cipher Decrypt AES": {
+        "scope": "php",
+        "prefix": "Cipher::decryptAES",
+        "body": "Cipher::decryptAES(${1:key}, ${2:ciphertext});"
+    },
+    "Cipher Encrypt AES Json": {
+        "scope": "php",
+        "prefix": "Cipher::encryptAESJson",
+        "body": "Cipher::encryptAESJson(${1:key}, ${2:data});"
+    },
+    "Cipher Decrypt AES Json": {
+        "scope": "php",
+        "prefix": "Cipher::decryptAESJson",
+        "body": "Cipher::decryptAESJson(${1:key}, ${2:cipherjson});"
+    },
+    "User Has": {
+        "scope": "php",
+        "prefix": "User::has",
+        "body": "User::has('${1:privilege}');"
+    },
+    "User Is": {
+        "scope": "php",
+        "prefix": "User::is",
+        "body": "User::is('${1:role}');"
+    },
+    "User Is Not": {
+        "scope": "php",
+        "prefix": "User::isNot",
+        "body": "User::isNot('${1:role}');"
+    },
+    "User Instance": {
+        "scope": "php",
+        "prefix": "User::user",
+        "body": "User::user();"
+    },
+    "User Fields": {
+        "scope": "php",
+        "prefix": "User::$",
+        "body": "User::\\$${1|isAuthenticated,username,role,privileges|}"
+    },
+    "Zip": {
+        "scope": "php",
+        "prefix": "Zip::zip",
+        "body": "Zip::zip(${1:source}, ${2:destination}, ${3:filename});"
+    },
+    "Validate Has Exact Length": {
+        "scope": "php",
+        "prefix": "Validate::hasExactLength",
+        "body": "Validate::hasExactLength(${1:field}, ${2:value}, ${3:length});"
+    },
+    "Validate Has Max Length": {
+        "scope": "php",
+        "prefix": "Validate::hasMaxLength",
+        "body": "Validate::hasMaxLength(${1:field}, ${2:value}, ${3:length});"
+    },
+    "Validate Has Min Length": {
+        "scope": "php",
+        "prefix": "Validate::hasMinLength",
+        "body": "Validate::hasMinLength(${1:field}, ${2:value}, ${3:length});"
+    },
+    "Validate Is Decimal": {
+        "scope": "php",
+        "prefix": "Validate::isDecimal",
+        "body": "Validate::isDecimal(${1:field}, ${2:value}, ${3:length});"
+    },
+    "Validate Must Contain Number": {
+        "scope": "php",
+        "prefix": "Validate::mustContainNumber",
+        "body": "Validate::mustContainNumber(${1:field}, ${2:value});"
+    },
+    "Validate Must Contain Numbers": {
+        "scope": "php",
+        "prefix": "Validate::mustContainLetters",
+        "body": "Validate::mustContainLetters(${1:field}, ${2:value});"
+    },
+    "Validate Must Contain Upper Case": {
+        "scope": "php",
+        "prefix": "Validate::mustContainUpperCase",
+        "body": "Validate::mustContainUpperCase(${1:field}, ${2:value});"
+    },
+    "Validate Must Contain Lower Case": {
+        "scope": "php",
+        "prefix": "Validate::mustContainLowerCase",
+        "body": "Validate::mustContainLowerCase(${1:field}, ${2:value});"
+    },
+    "Validate Is Valid Email": {
+        "scope": "php",
+        "prefix": "Validate::isValidEmail",
+        "body": "Validate::isValidEmail(${1:field}, ${2:value});"
+    },
+    "Validate Is Valid Password": {
+        "scope": "php",
+        "prefix": "Validate::isValidPassword",
+        "body": "Validate::isValidPassword(${1:field}, ${2:value}, ${3:mustContainNumber}, ${4:mustContainLowerCase}, ${5:mustContainUpperCase}, ${6:mustContainSpecialChars}, ${7:minlength});"
+    },
+    "Validate Is Valid Telephone": {
+        "scope": "php",
+        "prefix": "Validate::isValidTelephone",
+        "body": "Validate::isValidTelephone(${1:field}, ${2:value});"
+    },
+    "Validate Is Valid Date": {
+        "scope": "php",
+        "prefix": "Validate::isValidDate",
+        "body": "Validate::isValidDate(${1:field}, ${2:value});"
+    },
+    "Validate Is Valid Url": {
+        "scope": "php",
+        "prefix": "Validate::isValidUrl",
+        "body": "Validate::isValidUrl(${1:field}, ${2:value});"
+    },
+    "Validate Is Valid Domain": {
+        "scope": "php",
+        "prefix": "Validate::isValidDomain",
+        "body": "Validate::isValidDomain(${1:field}, ${2:value}, ${3:length});"
+    },
+    "Validate Is Valid IP Address": {
+        "scope": "php",
+        "prefix": "Validate::isValidIP",
+        "body": "Validate::isValidIP(${1:field}, ${2:value}, ${3:length});"
+    },
+    "Validate Is Valid Mac Address": {
+        "scope": "php",
+        "prefix": "Validate::isValidMAC",
+        "body": "Validate::isValidMAC(${1:field}, ${2:value}, ${3:length});"
+    },
+    "Validate Fields": {
+        "scope": "php",
+        "prefix": "Validate::$",
+        "body": "Validate::\\$${1|status,error|}"
+    }
+}
