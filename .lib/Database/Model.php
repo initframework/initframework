@@ -284,7 +284,6 @@ class Model extends Database
       try {
 
          $query = "SELECT {$fields} FROM ". self::$table ." {$condition}";
-         // exit($query);
 
          $stmt = self::$conn->prepare($query);
          
