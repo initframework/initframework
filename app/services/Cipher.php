@@ -11,7 +11,11 @@ class Cipher
 
    public static function token(int $length = 6)
    {
-      return substr(hexdec(bin2hex(openssl_random_pseudo_bytes($length))), 0, $length);
+      $token = "";
+      for ($i=0; $i < $length; $i++) { 
+         $token .= rand(0, 9);
+      }
+      return $token;
    }
 
    public static function encryptDigest(string $username, string $password)
@@ -61,8 +65,7 @@ class Cipher
    public static function hashPassword(string $password)
    {
       $options = [
-         'cost' => 10,
-         'salt' => openssl_random_pseudo_bytes(22),
+         'cost' => 10
       ];
    
       $password =  password_hash($password, PASSWORD_BCRYPT, $options);

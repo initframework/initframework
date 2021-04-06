@@ -1,14 +1,13 @@
-#!/usr/bin/env sh
+<?php
+include 'vendor/autoload.php';
+use Library\Console\Init;
 
-dir=$(cd "${0%[/\\]*}" > /dev/null; cd ".lib/" && pwd)
+set_error_handler(function() {
+   $backtraces = \debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT,10);
+   $backtrace = $backtraces[0];
+   $code = (string)$backtrace['args'][0];
+   $message = (string)$backtrace['args'][1];
+   exit(sprintf("Error: [%s] %s\n", $code, $message));
+});
 
-if [ -d /proc/cygdrive ]; then
-    case $(which php) in
-        $(readlink -n /proc/cygdrive)/*)
-            # We are in Cygwin using Windows php, so the path must be translated
-            dir=$(cygpath -m "$dir");
-            ;;
-    esac
-fi
-
-"php" "${dir}/Init" "$@"
+new Init($argv);

@@ -6,13 +6,11 @@ class Request
 {
    public function __construct()
    {
+      // Set Timezone
+      date_default_timezone_set(TIMEZONE);
       if (PHP_SAPI == 'cli') {
-         // Set Timezone
-         date_default_timezone_set(TIMEZONE);
          $this->bootstrapConsole();
       } else {
-         // Set Timezone
-         date_default_timezone_set(TIMEZONE);
          $this->bootstrapApp();
       }
 
@@ -63,30 +61,58 @@ class Request
          ]
       );
       $_ENV['REQUEST'] = $this;
+
+      header("Access-Control-Allow-Origin: *");
+      header("Access-Control-Allow-Headers: Content-Type, X-Custom-Header, AuthToken");
+      header("Access-Control-Allow-Methods: OPTIONS, GET, POST, PUT, PATCH, DELETE");
+      header("Accept: */*");
+      if ($this->requestMethod == 'OPTIONS') {
+         http_response_code(200);
+         exit();
+      }
    }
 
    private function bootstrapApp()
    {
+      // set the default content type
+      $this->contentType = "text/html";
+      // get server properties
       foreach($_SERVER as $key => $value)
       {
          $this->{$this->toCamelCase($key)} = $value;
       }
-      // uri
+      // request uri
       $this->requestUri = preg_replace("/\?.+/m", "", $this->requestUri);
-      
       // route params would be defined by the router
       $this->routeParams = null;
       // request query
-      $this->query = $_GET;
-      // request body
-      if (in_array($this->requestMethod, ["POST", "PATCH", "PUT", "DELETE"])) {
-         $this->body = $_POST;
-      }
+      $this->query = $_GET ?? [];
       // accomodating request methods from html forms (spoofing)
       if ($this->requestMethod == "POST" && isset($this->body['HTTP_REQUEST_METHOD']) && in_array($this->body['HTTP_REQUEST_METHOD'], ["PUT", "PATCH", "DELETE"]))
       {
          $this->requestMethod = $this->body['HTTP_REQUEST_METHOD'];
       }
+      // request body
+      if (in_array($this->requestMethod, ["POST", "PATCH", "PUT", "DELETE"])) {
+         if ($this->contentType == "application/json") {
+            // get the raw input
+            $input = file_get_contents('php://input');
+            // replace the spaces and newlines
+            $parsedInputs = 
+               str_replace(" ", "", 
+                  str_replace("\r", "", 
+                     str_replace("\n", "", $input)));
+            // convertinto an associative array as a post
+            $this->body = json_decode($parsedInputs, true) ?? [];
+         } else {
+            $this->body = $_POST ?? [];
+         }
+      }
+      // // do not accept some request method
+      // if (!in_array($this->requestMethod, ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'])) {
+      //    http_response_code(405);
+      //    trigger_error("Unknown Request Method");
+      // }
    }
 
    private function bootstrapConsole()

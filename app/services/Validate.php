@@ -62,12 +62,34 @@ class Validate
       return true;
    }
 
+   // is not empty
+   public static function isNotEmpty(string $field, string $value)
+   {
+      if (empty($value) == true) {
+         self::$status = false;
+         self::$error[$field] = "$field cannot be empty";
+         return false;
+      }
+      return true;
+   }
+
    // must contain numbers
    public static function mustContainNumber(string $field, string $value)
    {
       if (preg_match("/\d+/", $value) == false) {
          self::$status = false;
          self::$error[$field] = "$field must contain numbers";
+         return false;
+      }
+      return true;
+   }
+
+   // must contain numbers only
+   public static function mustContainNumberOnly(string $field, string $value)
+   {
+      if (preg_match("/^\d+$/", $value) == false) {
+         self::$status = false;
+         self::$error[$field] = "$field must contain numbers only";
          return false;
       }
       return true;
@@ -85,12 +107,34 @@ class Validate
       return true;
    }
 
+   // must contain letters only
+   public static function mustContainLettersOnly(string $field, string $value)
+   {
+      if (preg_match("/^[A-Za-z]+$/", $value) == false) {
+         self::$status = false;
+         self::$error[$field] = "$field must contain letters only";
+         return false;
+      }
+      return true;
+   }
+
    // must contain upper-case letters
    public static function mustContainUpperCase(string $field, string $value)
    {
       if (preg_match("/[A-Z]+/", $value) == false) {
          self::$status = false;
          self::$error[$field] = "$field must contain upper-case letters";
+         return false;
+      }
+      return true;
+   }
+
+   // must contain upper-case letters only
+   public static function mustContainUpperCaseOnly(string $field, string $value)
+   {
+      if (preg_match("/^[A-Z]+$/", $value) == false) {
+         self::$status = false;
+         self::$error[$field] = "$field must contain upper-case letters only";
          return false;
       }
       return true;
@@ -107,18 +151,29 @@ class Validate
       return true;
    }
 
-   // email
-   public static function isValidEmail(string $field, string $value)
+   // must contain lower-case letters only
+   public static function mustContainLowerCaseOnly(string $field, string $value)
    {
-      if (filter_var($value, FILTER_VALIDATE_EMAIL) == false) {
+      if (preg_match("/^[a-z]+$/", $value) == false) {
          self::$status = false;
-         self::$error[$field] = "$field is not a valid email";
+         self::$error[$field] = "$field must contain lower-case letters";
          return false;
       }
       return true;
    }
 
-   public function isValidPassword(string $field, string $value, bool $mustContainNumber = true, bool $mustContainLowerCase = true, bool $mustContainUpperCase = true, bool $mustContainSpecialChars = true, int $minlength = 8)
+   // email
+   public static function isValidEmail(string $field, string $value)
+   {
+      if (filter_var($value, FILTER_VALIDATE_EMAIL) == false) {
+         self::$status = false;
+         self::$error[$field] = "$field is not a valid email address";
+         return false;
+      }
+      return true;
+   }
+
+   public static function isValidPassword(string $field, string $value, bool $mustContainNumber = true, bool $mustContainLowerCase = true, bool $mustContainUpperCase = true, bool $mustContainSpecialChars = true, int $minlength = 8)
    {
       if ($mustContainNumber && preg_match("/\d+/", $value) == false) {
          self::$status = false;
@@ -149,7 +204,7 @@ class Validate
    }
 
    // telephone
-   public function isValidTelephone(string $field, string $value)
+   public static function isValidTelephone(string $field, string $value)
    {
       if (preg_match("/^[0-9-+()]+$/", preg_replace("/\s/", "", $value)) == false) {
          self::$status = false;
@@ -160,7 +215,7 @@ class Validate
    }
 
    // date
-   public function isValidDate(string $field, string $value)
+   public static function isValidDate(string $field, string $value)
    {
       if (preg_match("/^[0-9-:\/WT]+$/", $value) == false) {
          self::$status = false;
@@ -182,7 +237,7 @@ class Validate
    }
 
    // domain
-   public function isValidDomain(string $field, string $value)
+   public static function isValidDomain(string $field, string $value)
    {
       if (filter_var($value, FILTER_VALIDATE_DOMAIN, [FILTER_FLAG_HOSTNAME]) == false) {
          self::$status = false;

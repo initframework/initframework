@@ -5,73 +5,73 @@ class Cache
 {
 	private static $expire;
 
-	private static function __instance($expire = CACHE_EXPIRE) {
-		self::$expire = $expire;
+	// private static function __instance($expire = CACHE_EXPIRE) {
+	// 	self::$expire = $expire;
 
-		$files = glob(CACHE_DIR . 'cache.*');
+	// 	$files = glob(CACHE_DIR . 'cache.*');
 
-		if ($files) {
-			foreach ($files as $file) {
-				$time = substr(strrchr($file, '.'), 1);
+	// 	if ($files) {
+	// 		foreach ($files as $file) {
+	// 			$time = substr(strrchr($file, '.'), 1);
 
-				if ($time < time()) {
-					if (file_exists($file)) {
-						unlink($file);
-					}
-				}
-			}
-		}
-	}
+	// 			if ($time < time()) {
+	// 				if (file_exists($file)) {
+	// 					unlink($file);
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
 
-	public static function get($key) {
-		self::__instance();
-		$files = glob(CACHE_DIR . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.*');
+	// public static function get($key) {
+	// 	self::__instance();
+	// 	$files = glob(CACHE_DIR . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.*');
 
-		if ($files) {
-			$handle = fopen($files[0], 'r');
+	// 	if ($files) {
+	// 		$handle = fopen($files[0], 'r');
 
-			flock($handle, LOCK_SH);
+	// 		flock($handle, LOCK_SH);
 
-			$data = fread($handle, filesize($files[0]));
+	// 		$data = fread($handle, filesize($files[0]));
 
-			flock($handle, LOCK_UN);
+	// 		flock($handle, LOCK_UN);
 
-			fclose($handle);
+	// 		fclose($handle);
 
-			return json_decode($data, true);
-		}
+	// 		return json_decode($data, true);
+	// 	}
 
-		return false;
-	}
+	// 	return false;
+	// }
 
-	public static function set($key, $value) {
-		self::__instance();
-		self::delete($key);
+	// public static function set($key, $value) {
+	// 	self::__instance();
+	// 	self::delete($key);
 
-		$file = CACHE_DIR . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.' . (time() + self::$expire);
+	// 	$file = CACHE_DIR . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.' . (time() + self::$expire);
 
-		$handle = fopen($file, 'w');
+	// 	$handle = fopen($file, 'w');
 
-		flock($handle, LOCK_EX);
+	// 	flock($handle, LOCK_EX);
 
-		fwrite($handle, json_encode($value));
+	// 	fwrite($handle, json_encode($value));
 
-		fflush($handle);
+	// 	fflush($handle);
 
-		flock($handle, LOCK_UN);
+	// 	flock($handle, LOCK_UN);
 
-		fclose($handle);
-	}
+	// 	fclose($handle);
+	// }
 
-	private static function delete($key) {
-		$files = glob(CACHE_DIR . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.*');
+	// private static function delete($key) {
+	// 	$files = glob(CACHE_DIR . 'cache.' . preg_replace('/[^A-Z0-9\._-]/i', '', $key) . '.*');
 
-		if ($files) {
-			foreach ($files as $file) {
-				if (file_exists($file)) {
-					unlink($file);
-				}
-			}
-		}
-	}
+	// 	if ($files) {
+	// 		foreach ($files as $file) {
+	// 			if (file_exists($file)) {
+	// 				unlink($file);
+	// 			}
+	// 		}
+	// 	}
+	// }
 }

@@ -4,9 +4,9 @@ use Library\Http\Request;
 use Library\Http\Router;
 use Services\Cipher;
 
-class VerifyCSRF
+class CSRF
 {
-   public function __construct(Request $request)
+   public static function verify(Request $request)
    {
       $csrftoken = $request->body['CSRFToken'] ?? $request->httpCsrftoken ?? null;
 

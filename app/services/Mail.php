@@ -53,42 +53,43 @@ class Mail
       return new Mail;
    }
 
-   public static function send(string $from, string $to, string $subject, string $reply = ':')
+   public static function send(string $from, string $to, string $subject, string $reply = ':') : bool
    {
-      $from = explode(":",$from); $to = explode(":",$to); $reply = explode(":",$reply);
-      self::$mail->SetFrom($from[0], $from[1] ?? '');
-      self::$mail->AddAddress($to[0], $to[1] ?? '');
+      $sentfrom = explode(":",$from); $sentto = explode(":",$to); $reply = explode(":",$reply);
+      self::$mail->SetFrom($sentfrom[0], $sentfrom[1] ?? '');
+      self::$mail->AddAddress($sentto[0], $sentto[1] ?? '');
       self::$mail->AddReplyTo($reply[0] ?? '', $reply[1] ?? '');
       self::$mail->Subject = $subject;
       self::$mail->Body = self::$body ?? '';
       try {
-         if (self::$mail->Send()) {
+         if (@self::$mail->Send()) {
             return true;
          } else {
-            throw new \Exception("Error: mail not sent.");
+            throw new \Exception(self::$mail->ErrorInfo);
             return false;
          }
       } catch (\Throwable $e) {
+         return false;
          trigger_error($e->getMessage());
       }
    }
 
    public static function sendMultiple(string $from, array $to, string $subject, string $reply = ':')
    {
-      $from = explode(":",$from); $reply = explode(":",$reply);
+      $sentfrom = explode(":",$from); $reply = explode(":",$reply);
       foreach ($to as $person) {
          $addressTo = explode(":",$person); 
          self::$mail->AddAddress($addressTo[0], $addressTo[1] ?? '');
       }
-      self::$mail->SetFrom($from[0], $from[1] ?? '');
+      self::$mail->SetFrom($sentfrom[0], $from[1] ?? '');
       self::$mail->AddReplyTo($reply[0] ?? '', $reply[1] ?? '');
       self::$mail->Subject = $subject;
       self::$mail->Body = self::$body ?? '';
       try {
-         if (self::$mail->Send()) {
+         if (@self::$mail->Send()) {
             return true;
          } else {
-            throw new \Exception("Error: mail not sent.");
+            throw new \Exception(self::$mail->ErrorInfo);
             return false;
          }
       } catch (\Throwable $e) {

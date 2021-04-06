@@ -4,9 +4,9 @@ use Library\Http\Request;
 use Library\Http\Router;
 use Services\User;
 
-class SessionAuth
+class Session
 {
-   public function __construct(Request $request)
+   public static function auth(Request $request)
    {
 
       // retrieve credentials
@@ -20,7 +20,7 @@ class SessionAuth
       ) {
          // set the users details
          User::$isAuthenticated = true;
-         User::$username = $username;
+         User::$email = $username;
          User::$privileges = ['dashboard','settings'];
       } else {
          redirect(Router::getRoute('login') ?? '/');

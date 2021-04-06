@@ -134,12 +134,12 @@ function success($message = "success", array $data = null, int $code = 200)
    exit(json_encode($data));
 }
 
-function error($message = "error", array $data = null, int $code = 400)
+function error($message = "error", array $data = null, int $code = 200)
 {
    __validateCode($code);
    header("Content-Type: application/json; charset=UTF-8", true, $code);
    exit(json_encode([
-      "status" => true,
+      "status" => false,
       "message" => $message,
       "data" => $data
    ]));
@@ -147,13 +147,13 @@ function error($message = "error", array $data = null, int $code = 400)
 
 function notFoundError($req)
 {
-   if (substr_compare($req->httpAccept, "text/html", 0) == true) {
+   http_response_code(404);
+   if ($req->contentType == "text/html") {
       render('framework/error.html', [
          "code" => 404,
          "message" => "Not Found"
       ], 404);
    } else {
-      http_response_code(404);
       exit("Not Found");
       // http_throttle()
    }
@@ -161,13 +161,13 @@ function notFoundError($req)
 
 function serverError($req)
 {
-   if (substr_compare($req->httpAccept, "text/html", 0) == true ) {
+   http_response_code(500);
+   if ($req->contentType == "text/html") {
       render('framework/error.html', [
          "code" => 500,
          "message" => "Server Error"
       ], 500);
    } else {
-      http_response_code(500);
       exit("Server Error");
       // http_throttle()
    }

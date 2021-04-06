@@ -4,9 +4,9 @@
 define('SERVER', 'http://localhost:8080');
 
 // APPLICATION
-define('APP_NAME', 'Init Framework');
+define('APP_NAME', 'YOUR-APP-NAME');
 define('APP_BASEDIR', \dirname(__DIR__) . '/');
-define('APP_KEY', 'enter-your-key');
+define('APP_KEY', 'ENTER-YOUR-KEY');
 define('ENV', 'dev'); // test, live
 
 // RESOURCES
@@ -16,9 +16,12 @@ define('STORAGE_PATH', 'storage/public/');
 define('STORAGE_DIR', APP_BASEDIR . STORAGE_PATH);
 
 // ERROR LOG
+define('LOG_ERROR', true);
 define('LOG_FILE', APP_BASEDIR . 'storage/logs/error.log');
-define('LOG_EMAIL', false);
-define('LOG_ADDRESS', 'postmaster@localhost');
+define('DISPLAY_ERROR', true);
+define('SEND_EMAIL_LOG', false);
+define('SEND_EMAIL_LOG_ADDRESS', 'postmaster@localhost');
+ini_set('display_errors', DISPLAY_ERROR == true ? 'on' : 'off');
 
 // AUTHENTICATION
 define('AUTH_LIFETIME', 60); // Minutes
@@ -28,11 +31,6 @@ define('SESSION_DIR', APP_BASEDIR . 'storage/session/');
 define('SESSION_NAME', 'ISESSID');
 define('SESSION_EXPIRE', 'AUTH_LIFETIME');
 
-// CACHE
-// define('CACHE_REQUEST', true);
-// define('CACHE_EXPIRE', 3600);
-// define('CACHE_DIR', APP_BASEDIR . 'storage/cache/');
-
 // DB
 define('DB_DRIVER', 'mysql');
 define('DB_HOST', 'localhost');
@@ -40,7 +38,7 @@ define('DB_USERNAME', 'root');
 define('DB_PASSWORD', '');
 define('DB_DATABASE', 'test');
 define('DB_PORT', '3306');
-define('DB_PREFIX', 'init_');
+define('DB_PREFIX', '');
 define('DB_ENGINE', 'MyISAM');
 define('DB_DEFAULT_CHARSET', 'latin1');
 define('DB_COLLATION', 'latin1_swedish_ci');

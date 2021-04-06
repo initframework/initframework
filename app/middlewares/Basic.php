@@ -3,9 +3,9 @@ namespace Middlewares;
 use Library\Http\Request;
 use Services\User;
 
-class BasicAuth
+class Basic
 {
-   public function __construct(Request $request)
+   public static function auth(Request $request)
    {
       if (!property_exists($request, "phpAuthUser"))
       {
@@ -34,7 +34,7 @@ class BasicAuth
 
          // set the user credentials
          User::$isAuthenticated = true;
-         User::$username = $db_username;
+         User::$email = $db_username;
 
       } else {
 

@@ -104,41 +104,44 @@ class Upload
    private static $validfiles = [];
    public static $unit = "Kb"; // Mb, Gb
    public static $field = "file";
+   public static $status;
+   public static $error;
+   public static $path;
 
    public static function tmp(string $filename, string $destination, array $accept, int $minsize = null, int $maxsize = null) : object
    {
       self::$validfiles = array_merge(self::$imagefiles, self::$videofiles, self::$audiofiles, self::$documentfiles, self::$fontfiles, self::$textfiles, self::$zipfiles);
       $upload = new \stdClass();
-      $upload->error = [];
-      $upload->status = true;
-      $upload->path = "";
+      self::$error = [];
+      self::$status = true;
+      self::$path = "";
       
       if (!isset($_FILES[$filename]) || empty($_FILES[$filename])) {
-         $upload->status = false;
-         $upload->error[] = self::$field . " was not uploaded";
+         self::$status = false;
+         self::$error[] = self::$field . " was not uploaded";
          return $upload;
       }
 
       if (self::accept($_FILES[$filename]['type'], $accept) == false) {
-         $upload->status = false;
-         $upload->error[] = self::$field . " must have file type of " . implode(", ", $accept);
+         self::$status = false;
+         self::$error[] = self::$field . " must have file type of " . implode(", ", $accept);
       }
 
       if (self::minsize($_FILES[$filename]['size'], $minsize) == false) {
-         $upload->status = false;
-         $upload->error[] = self::$field . " size cannot be less than $minsize" . self::$unit;
+         self::$status = false;
+         self::$error[] = self::$field . " size cannot be less than $minsize" . self::$unit;
       }
 
       if (self::maxsize($_FILES[$filename]['size'], $maxsize) == false) {
-         $upload->status = false;
-         $upload->error[] = self::$field . " size cannot be more than $maxsize" . self::$unit;
+         self::$status = false;
+         self::$error[] = self::$field . " size cannot be more than $maxsize" . self::$unit;
       }
 
-      if ($upload->status == true) {
+      if (self::$status == true) {
          $destination = ltrim($destination, "\/");
          $extension = self::$validfiles[$_FILES[$filename]['type']];
-         $upload->status = move_uploaded_file($_FILES[$filename]['tmp_name'], STORAGE_DIR . $destination . $extension);
-         $upload->path = STORAGE_PATH . $destination . $extension;
+         self::$status = move_uploaded_file($_FILES[$filename]['tmp_name'], STORAGE_DIR . $destination . $extension);
+         self::$path = STORAGE_PATH . $destination . $extension;
       }
 
       return $upload;

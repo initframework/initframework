@@ -4,9 +4,9 @@ use Library\Http\Request;
 use Services\Cipher;
 use Services\User;
 
-class DigestAuth
+class Digest
 {
-   public function __construct(Request $request)
+   public static function auth(Request $request)
    {
       
       if (!property_exists($request, "phpAuthDigest"))
@@ -51,7 +51,7 @@ class DigestAuth
          
          // set the user credentials
          User::$isAuthenticated = true;
-         User::$username = $username;
+         User::$email = $username;
          
       } else {
          

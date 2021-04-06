@@ -1,7 +1,7 @@
 <?php
 namespace Library\Http;
 use Library\Http\Request;
-use function call_user_method;
+
 class Router
 {
    private static $request;
@@ -137,7 +137,11 @@ class Router
             self::$request->routeParams = $params;
             foreach ($handlers as $handler) {
                if (is_callable($handler)) {
-                  \call_user_func_array($handler, [self::$request]);
+                  // try {
+                     call_user_func_array($handler, [self::$request]);
+                  // } catch (\Exception $e) {
+                  //    trigger_error("Unhandled Controller Error: {$e->getMessage()}");
+                  // }
                   break;
                }
             }

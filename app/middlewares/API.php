@@ -2,9 +2,9 @@
 namespace Middlewares;
 use Library\Http\Request;
 
-class APIAuth
+class API
 {
-   public function __construct(Request $request)
+   public static function auth(Request $request)
    {
       // Middleware codes...
    }
